@@ -1,0 +1,301 @@
+// import { Line, LineChart } from 'recharts';
+
+import { use, useEffect, useState } from 'react';
+import ResultsChart from '../../components/ResultsChart/ResultsChart';
+import { AuthContext } from '../../provider/AuthContext';
+import { Link } from 'react-router';
+import { IoIosArrowBack } from 'react-icons/io';
+import { IoBarChart } from 'react-icons/io5';
+import { ThemeContext } from '../../provider/ThemeContext';
+
+const Reports = () => {
+  const { user } = use(AuthContext);
+  const { theme } = use(ThemeContext);
+  const [transactions, setTransactions] = useState([]);
+  const [selectedMonthYear, setSelectedMonthYear] = useState('');
+  const now = new Date();
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(
+    2,
+    '0',
+  )}`;
+
+  useEffect(() => {
+    // fetch(`http://localhost:3000/transactions?email=${user?.email}`)
+    fetch(`http://localhost:3000/transactions`)
+      .then(res => res.json())
+      .then(data => {
+        setTransactions(data);
+      });
+  }, [user]);
+
+  // =======================================================================
+  // const totalIncome = transactions
+  //   .filter(item => item.type === 'Income')
+  //   .reduce((sum, item) => sum + Number(item.amount), 0);
+
+  // const totalExpense = transactions
+  //   .filter(item => item.type === 'Expense')
+  //   .reduce((sum, item) => sum + Number(item.amount), 0);
+
+  // const totalBalance = totalIncome - totalExpense;
+
+  // =======================================================================
+
+  const handleAddSort = e => {
+    e.preventDefault();
+    const form = e.target;
+    // const sortTime = form.sortTime.value;
+    const sortTime = new Date(form.sortTime.value).toLocaleString('default', {
+      month: 'long',
+      year: 'numeric',
+    });
+
+    setSelectedMonthYear(sortTime);
+  };
+  console.log(selectedMonthYear);
+
+  const filteredTransactions =
+    selectedMonthYear === ''
+      ? transactions
+      : transactions.filter(transaction => {
+          const monthYear = new Date(transaction.date).toLocaleString(
+            'default',
+            {
+              month: 'long',
+              year: 'numeric',
+            },
+          );
+
+          // ================= only for UTC
+          // const monthYear = new Date(transaction.date)
+          //   .toISOString()
+          //   .slice(0, 7);
+
+          return monthYear === selectedMonthYear;
+        });
+
+  // console.log(filteredTransactions);
+
+  // Then continue with your calculations
+  const totalIncome = filteredTransactions
+    .filter(item => item.type === 'Income')
+    .reduce((sum, item) => sum + Number(item.amount), 0);
+
+  const totalExpense = filteredTransactions
+    .filter(item => item.type === 'Expense')
+    .reduce((sum, item) => sum + Number(item.amount), 0);
+
+  const totalBalance = totalIncome - totalExpense;
+
+  return (
+    <div className="max-w-11/12 mx-auto py-25">
+      <div className="text-center mb-16">
+        <h2 className="text-4xl font-bold text-[#5c23be]">
+          Report Of The Transactions
+        </h2>
+        <p className="text-gray-600 mt-3 px-80">
+          Check the report by the chart of the transaction, which will be easier
+          to understand for your transaction monitor.
+        </p>
+      </div>
+
+      {transactions.length > 0 ? (
+        <div>
+          {/* <div className="flex flex-col gap-2">
+          <form onSubmit={handleAddSort}>
+            <label className="font-medium">Sort By Month-Year: </label>
+            <input
+              type="month"
+              name="sortTime"
+              // placeholder="All Years"
+              className="input input-bordered w-40"
+              min="1"
+              // onChange={e => setSelectedMonthYear(e.target.value)}
+              defaultValue="2026-06"
+              required
+            />
+            <button type="submit" className="btn btn-outline">
+              Sort
+            </button>
+          </form>
+          <button
+            className="btn btn-outline"
+            onClick={() => setSelectedMonthYear('')}
+          >
+            Default - Comprehensive Report Of All Time Periods
+          </button>
+        </div> */}
+          <div
+            className={`${theme === 'dark' ? 'bg-base-100' : 'bg-white'} drop-shadow-sm rounded-3xl border border-violet-100 p-3 mb-10`}
+          >
+            <div
+              className={`flex justify-between p-3 rounded-3xl items-center ${selectedMonthYear === '' && theme === 'light' ? 'bg-gray-100' : selectedMonthYear === '' && theme === 'dark' ? 'bg-base-300' : 'bg-base-100'}`}
+            >
+              <div>
+                <h3 className="text-2xl font-bold text-[#5c23be]">
+                  Comprehensive Report
+                </h3>
+
+                <p className="text-sm text-gray-500 mt-1">
+                  Report of all time periods. Which is selected by default.
+                </p>
+              </div>
+              <div className="flex flex-col gap-2">
+                {selectedMonthYear === '' ? (
+                  <p className="font-semibold text-[#522e90]">
+                    Default selected
+                  </p>
+                ) : (
+                  ''
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => setSelectedMonthYear('')}
+                  className={`btn rounded-xl border-none text-white hover:bg-emerald-700 ${selectedMonthYear === '' ? 'bg-emerald-700' : 'bg-[#10B981]'}`}
+                >
+                  🌍 Comprehensive Report Of All Time Periods
+                </button>
+              </div>
+            </div>
+            <div className="border-t-2 border-dotted border-gray-300 mt-4 mb-4"></div>
+            <div
+              className={`flex flex-col lg:flex-row lg:items-end lg:justify-between p-3 rounded-3xl ${selectedMonthYear === '' && theme === 'light' ? 'bg-white' : selectedMonthYear === '' && theme === 'dark' ? 'bg-base-100' : 'bg-base-300'}`}
+            >
+              {/* Left Side */}
+              <div>
+                <h3 className="text-2xl font-bold text-[#5c23be]">
+                  Filter Report
+                </h3>
+
+                <p className="text-sm text-gray-500 mt-1">
+                  Select any month and year to sort the transactions report for
+                  a specific month.
+                </p>
+              </div>
+
+              {/* Right Side */}
+              <form
+                onSubmit={handleAddSort}
+                className="flex flex-wrap items-end gap-3"
+              >
+                <div className="flex flex-col">
+                  <label className="font-semibold text-[#522e90] mb-2">
+                    Month & Year
+                  </label>
+
+                  <input
+                    type="month"
+                    name="sortTime"
+                    defaultValue={today}
+                    required
+                    className="input input-bordered rounded-xl w-48 focus:border-violet-500"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  {selectedMonthYear === '' ? (
+                    ''
+                  ) : (
+                    <p className="font-semibold text-[#522e90]">Sorted</p>
+                  )}
+                  <button
+                    type="submit"
+                    className={`btn rounded-xl border-none text-white hover:bg-[#4b1c9a]  ${selectedMonthYear === '' ? 'bg-[#7835ec]' : 'bg-[#4b1c9a]'}`}
+                  >
+                    <IoBarChart /> Sort The Report
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          {filteredTransactions.length > 0 ? (
+            <>
+              <div className="flex justify-center">
+                <div className="w-full">
+                  <ResultsChart
+                    totalIncome={totalIncome}
+                    totalExpense={totalExpense}
+                    totalBalance={totalBalance}
+                    selectedMonthYear={selectedMonthYear}
+                  />
+                  <p className="text-gray-400 text-xl font-medium text-center underline">
+                    Chart of the transactions
+                  </p>
+                </div>
+              </div>
+              <div className="p-8 mt-10">
+                <h4 className="text-3xl font-bold text-[#5c23be] mb-5">
+                  Description:
+                </h4>
+
+                <p className="text-gray-700 text-lg leading-8 text-justify">
+                  The report chart presents a comprehensive overview of your
+                  financial activities by comparing total income, total
+                  expenses, and the resulting balance within the selected
+                  period. It enables you to quickly identify financial trends,
+                  evaluate spending habits, measure savings, and understand your
+                  overall financial health. Regularly reviewing this report can
+                  help you make informed financial decisions, optimize your
+                  budget, and maintain better control over your personal
+                  finances.
+                </p>
+              </div>
+            </>
+          ) : (
+            <>
+              <p className="py-10 text-xl text-gray-400 text-center">
+                You did not add any transactions in that month and year. Please
+                add at least one transaction in that month and year to check the
+                report in the chart. Then you can filter the chart for this
+                month and year again.
+                <br />
+                <br />
+                <span className="text-sm">
+                  Click the button below for your choice
+                </span>
+              </p>
+              <div className="flex justify-center gap-x-5">
+                <Link
+                  to={'/addTransactions'}
+                  className="border-none text-white text-lg bg-linear-to-r from-violet-500 hover:from-violet-600 to-fuchsia-800 hover:scale-[1.10] duration-300 rounded-2xl py-2 px-5 flex items-center gap-2"
+                >
+                  <IoIosArrowBack className="text-4xl" />
+                  Add Transactions
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => setSelectedMonthYear('')}
+                  className={`hover:scale-[1.10] duration-300 rounded-2xl py-2 px-5 flex items-center gap-2 text-lg border-none text-white hover:bg-emerald-700 ${selectedMonthYear === '' ? 'bg-emerald-700' : 'bg-[#10B981]'}`}
+                >
+                  🌍 Report Of All Time Periods
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      ) : (
+        <>
+          <p className="py-10 text-xl text-gray-400 text-center">
+            Still, no transactions are added. Please create a transaction first.
+            Then check the transaction report. You can also check all of the
+            transactions report or can check the transactions by month. But you
+            need to add transactions first.
+          </p>
+          <div className="flex justify-center">
+            <Link
+              to={'/addTransactions'}
+              className="my-8 border-none text-white text-lg bg-linear-to-r from-violet-500 hover:from-violet-600 to-fuchsia-800 hover:scale-[1.10] duration-300 rounded-2xl py-2 px-5 flex items-center gap-2"
+            >
+              <IoIosArrowBack className="text-4xl" />
+              Add Transactions
+            </Link>
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
+
+export default Reports;

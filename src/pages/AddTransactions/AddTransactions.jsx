@@ -1,0 +1,704 @@
+// import { useRef } from 'react';
+
+// const AddTransactions = () => {
+//   const addTransactionsModalRef = useRef(null);
+
+//   const handleTransactionModalOpen = () => {
+//     addTransactionsModalRef.current.showModal();
+//   };
+
+//   return (
+// <div>
+//   <div className="max-w-11/12 mx-auto flex justify-center">
+//     <button
+//       onClick={handleTransactionModalOpen}
+//       type="submit"
+//       className="w-2/12 my-8 border-none text-white text-lg bg-linear-to-r from-violet-400 hover:from-violet-600 to-fuchsia-800 hover:scale-[1.10] duration-300 rounded-2xl py-2 px-3"
+//     >
+//       Add Transactions
+//     </button>
+
+//     <dialog
+//       ref={addTransactionsModalRef}
+//       className="modal modal-bottom sm:modal-middle"
+//     >
+//       <div className="modal-box">
+//         <h3 className="font-bold text-lg">Hello!</h3>
+//         <p className="py-4">Press ESC key or click the button below to close</p>
+
+//         <div className="modal-action">
+//           <form method="dialog">
+//             {/* if there is a button in form, it will close the modal */}
+//             <button className="btn">Close</button>
+//           </form>
+//         </div>
+//       </div>
+//     </dialog>
+//   </div>
+// </div>;
+//   );
+// };
+
+// export default AddTransactions;
+
+// ==============================================================
+import { use, useEffect, useRef, useState } from 'react';
+import {
+  Wallet,
+  CirclePlus,
+  CircleX,
+  BadgeDollarSign,
+  CalendarDays,
+  Layers3,
+  FileText,
+  User,
+  Mail,
+  DollarSign,
+} from 'lucide-react';
+import { toast } from 'react-toastify';
+import { AuthContext } from '../../provider/AuthContext';
+import { ThemeContext } from '../../provider/ThemeContext';
+
+const AddTransactions = () => {
+  const { user } = use(AuthContext);
+  const { theme } = use(ThemeContext);
+
+  console.log(user);
+
+  const addTransactionsModalRef = useRef(null);
+
+  const transactionsDetailsModalRef = useRef(null);
+
+  const handleTransactionModalOpen = () => {
+    addTransactionsModalRef.current.showModal();
+  };
+
+  // const handleTransactionDetailsModalOpen = () => {
+  //   transactionsDetailsModalRef.current.showModal();
+  // };
+
+  const handleTransactionDetailsModalOpen = transaction => {
+    setSelectedTransaction(transaction);
+    transactionsDetailsModalRef.current.showModal();
+  };
+
+  const [transactionData, setTransactionData] = useState([]);
+  const [selectedTransaction, setSelectedTransaction] = useState(null);
+
+  console.log('final data', transactionData);
+
+  // const today = new Date().toISOString().split('T')[0]; // only for backed UTC time
+
+  const now = new Date();
+
+  const today =
+    `${now.getFullYear()}-` +
+    `${String(now.getMonth() + 1).padStart(2, '0')}-` +
+    `${String(now.getDate()).padStart(2, '0')}`; // for client side frontend local time zone
+
+  const totalCategoryAmount = transactionData
+    .filter(
+      transaction =>
+        transaction.category === selectedTransaction?.category &&
+        transaction.type === selectedTransaction?.type,
+    )
+    .reduce((total, transaction) => total + Number(transaction.amount), 0);
+  // =====================================================
+  // const [transactionData, setTransactionData] = useState({
+  //   // _id: '67f0a1b2c3d4e5f601000001',
+  //   // title: 'Total Balance',
+  //   // type: 'Income',
+  //   // category: 'salary',
+  //   // amount: 25480,
+  //   // date: '2026-04-28',
+  //   // email: 'xyz@gmail.com',
+  //   // description: 'current available balance',
+  //   // name: 'Hero',
+  // });
+
+  // console.log(transactionData);
+
+  // const handleChange = e => {
+  //   const { name, value } = e.target;
+
+  //   setTransactionData({
+  //     ...transactionData,
+  //     [name]: value,
+  //   });
+  // };
+
+  // =====================================================
+  // 1. Create a ref to hold the form data object
+  // const transactionData = useRef({});
+
+  // const handleChange = e => {
+  //   const { name, value } = e.target;
+
+  //   // 2. Update the ref directly.
+  //   // This happens instantly without causing a re-render.
+  //   transactionData.current = {
+  //     ...transactionData.current,
+  //     [name]: value,
+  //   };
+  // };
+
+  // =====================================================
+  const handleAddTransaction = e => {
+    e.preventDefault();
+
+    const form = e.target; // e.target IS the <form> element here
+    const title = form.title.value;
+    const email = form.email.value;
+    const amount = form.amount.value;
+    const category = form.category.value;
+    const type = form.type.value;
+    const date = form.date.value;
+    // const date = new Date(form.date.value);
+    const name = form.name.value;
+    const description = form.description.value;
+
+    const newTransaction = {
+      title,
+      email,
+      amount,
+      category,
+      type,
+      date,
+      name,
+      description,
+    };
+
+    // console.log(newTransaction);
+
+    addTransactionsModalRef.current.close();
+
+    fetch('http://localhost:3000/transactions', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify(newTransaction),
+    })
+      .then(res => res.json())
+      .then(data => {
+        const savedTransaction = {
+          ...newTransaction,
+          _id: data.insertedId,
+        };
+        setTransactionData(prev => [savedTransaction, ...prev]);
+        // setTransactionData(prev => [...prev, savedTransaction]);
+        // setTransactionData(prev => [...prev, data]);
+
+        console.log('after placing transaction', data);
+
+        if (data.insertedId) {
+          toast.success('Transaction Added Successfully', {
+            theme: theme,
+          });
+          addTransactionsModalRef.current.close();
+          e.target.reset();
+        }
+      })
+      .catch(() => {
+        // console.error(error);
+        toast.error('Failed to add transaction. Please try again.');
+      });
+  };
+
+  // =====================================================
+  // const handleCancel = () => {
+  //   toast.error('Transaction Cancelled');
+  // };
+
+  // =====================================================
+  useEffect(() => {
+    fetch('http://localhost:3000/transactions')
+      .then(res => res.json())
+      .then(data => {
+        setTransactionData(data);
+        console.log('transaction added', data);
+      });
+  }, []);
+
+  return (
+    <div className="max-w-11/12 mx-auto flex flex-col items-center justify-center p-4">
+      <div className="text-center my-12">
+        <h2 className="text-4xl font-bold text-[#5c23be]">
+          Add Your Transactions Here
+        </h2>
+        <p className="text-gray-600 mt-3">
+          Check the transactions after adding.
+        </p>
+      </div>
+      {/* Post Transactions */}
+      <button
+        onClick={handleTransactionModalOpen}
+        type="submit"
+        className="w-2/12 my-8 border-none text-white text-lg hover:scale-[1.10] duration-300 rounded-2xl py-2 px-3 bg-linear-to-r from-violet-500 hover:from-violet-400 to-fuchsia-400"
+      >
+        Add Transactions
+      </button>
+      <dialog ref={addTransactionsModalRef} className="modal">
+        <div className="modal-box max-w-4xl p-0 bg-transparent shadow-none max-h-[90vh] overflow-y-auto">
+          <div className="bg-base-100 shadow-2xl rounded-3xl border border-base-300 overflow-hidden overflow-x-hidden">
+            {/* Top Gradient */}
+            <div className="h-2 bg-linear-to-r from-violet-600 via-fuchsia-500 to-blue-500"></div>
+
+            <div className="p-8">
+              {/* Header */}
+              <div className="flex flex-col items-center justify-center mb-8">
+                <div className="w-20 h-20 rounded-2xl bg-linear-to-br from-violet-100 to-blue-100 flex items-center justify-center shadow-md mb-4 border border-violet-200">
+                  <Wallet size={40} className="text-violet-600" />
+                </div>
+
+                <h2 className="text-4xl font-extrabold text-center">
+                  Add{' '}
+                  <span className="bg-linear-to-r from-violet-600 to-fuchsia-500 bg-clip-text text-transparent">
+                    Transaction
+                  </span>
+                </h2>
+
+                <p className="text-base-content/60 mt-2 text-sm">
+                  Create your transaction
+                </p>
+              </div>
+
+              {/* Form */}
+              <form onSubmit={handleAddTransaction}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  {/* Title */}
+                  <div>
+                    <label className="label">
+                      <span className="label-text font-semibold">Title</span>
+                    </label>
+
+                    <label className="input input-bordered flex items-center gap-3 rounded-xl">
+                      <BadgeDollarSign size={18} className="text-violet-500" />
+
+                      <input
+                        type="text"
+                        name="title"
+                        // onChange={handleChange}
+                        placeholder="Enter title"
+                        className="grow"
+                        required
+                      />
+                    </label>
+                  </div>
+
+                  {/* Amount */}
+                  <div>
+                    <label className="label">
+                      <span className="label-text font-semibold">Amount</span>
+                    </label>
+
+                    <label className="input input-bordered flex items-center gap-3 rounded-xl">
+                      <DollarSign size={18} className="text-green-500" />
+
+                      <input
+                        type="number"
+                        name="amount"
+                        // onChange={handleChange}
+                        placeholder="Enter amount"
+                        className="grow"
+                        required
+                      />
+                    </label>
+                  </div>
+
+                  {/* Category */}
+                  <div>
+                    <label className="label">
+                      <span className="label-text font-semibold">Category</span>
+                    </label>
+
+                    <label className="input input-bordered flex items-center gap-3 rounded-xl">
+                      <Layers3 size={18} className="text-blue-500" />
+
+                      <select
+                        name="category"
+                        defaultValue="Salary"
+                        // onChange={handleChange}
+                        className="w-full outline-none bg-base-100"
+                      >
+                        <option value="salary">Salary</option>
+                        <option value="freelance">Freelance</option>
+                        <option value="business">Business</option>
+                        <option value="transport">Transport</option>
+                        <option value="investment">Investment</option>
+                        <option value="bill">Bill</option>
+                        <option value="rent">Rent</option>
+                        <option value="food">Food</option>
+                        <option value="buy">Buy</option>
+                        <option value="others">Others</option>
+                      </select>
+                    </label>
+                  </div>
+
+                  {/* Type */}
+                  <div>
+                    <label className="label">
+                      <span className="label-text font-semibold">Type</span>
+                    </label>
+
+                    <label className="input input-bordered flex items-center gap-3 rounded-xl">
+                      <Wallet size={18} className="text-orange-500" />
+
+                      <select
+                        name="type"
+                        defaultValue="Expense"
+                        // onChange={handleChange}
+                        className="w-full bg-transparent outline-none"
+                      >
+                        <option className="bg-base-100" value="Income">
+                          Income
+                        </option>
+                        <option className="bg-base-100" value="Expense">
+                          Expense
+                        </option>
+                      </select>
+                    </label>
+                  </div>
+
+                  {/* Date */}
+                  <div>
+                    <label className="label">
+                      <span className="label-text font-semibold">Date</span>
+                    </label>
+
+                    <label className="input input-bordered flex items-center gap-3 rounded-xl">
+                      <CalendarDays size={18} className="text-pink-500" />
+
+                      <input
+                        type="date"
+                        name="date"
+                        defaultValue={today}
+                        // onChange={handleChange}
+                        className="grow"
+                      />
+                    </label>
+                  </div>
+
+                  {/* Name */}
+                  <div>
+                    <label className="label">
+                      <span className="label-text font-semibold">
+                        User Name
+                      </span>
+                    </label>
+
+                    <label className="input input-bordered flex items-center gap-3 rounded-xl bg-base-300 cursor-not-allowed">
+                      <User size={18} className="text-cyan-500" />
+
+                      <input
+                        type="text"
+                        name="name"
+                        defaultValue={user?.displayName}
+                        // onChange={handleChange}
+                        placeholder="Enter user name"
+                        className="grow cursor-not-allowed bg-base-300"
+                        readOnly
+                      />
+                    </label>
+                  </div>
+
+                  {/* Email */}
+                  <div className="md:col-span-2">
+                    <label className="label">
+                      <span className="label-text font-semibold">Email</span>
+                    </label>
+
+                    <label className="input input-bordered flex items-center gap-3 rounded-xl bg-base-300 cursor-not-allowed">
+                      <Mail size={18} className="text-violet-500" />
+
+                      <input
+                        type="email"
+                        name="email"
+                        defaultValue={user?.email}
+                        // onChange={handleChange}
+                        placeholder="Enter email"
+                        className="grow cursor-not-allowed bg-base-300"
+                        readOnly
+                      />
+                    </label>
+                  </div>
+                </div>
+
+                {/* Description */}
+                <div className="mt-5">
+                  <label className="label">
+                    <span className="label-text font-semibold">
+                      Description
+                    </span>
+                  </label>
+
+                  <label className="textarea textarea-bordered flex gap-3 rounded-2xl">
+                    <FileText size={18} className="text-fuchsia-500 mt-1" />
+
+                    <textarea
+                      name="description"
+                      // defaultValue={''}
+                      // onChange={handleChange}
+                      placeholder="Write transaction details... example: advance house rent pay"
+                      className="w-full h-28 outline-none bg-transparent resize-none"
+                      required
+                    ></textarea>
+                  </label>
+                </div>
+
+                {/* Buttons */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
+                  <button
+                    type="submit"
+                    className="btn border-none text-white rounded-xl text-lg bg-linear-to-r from-violet-600 to-fuchsia-500 hover:scale-[1.02] duration-300"
+                  >
+                    <CirclePlus size={22} />
+                    Add Transaction
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      // handleCancel();
+                      addTransactionsModalRef.current.close();
+                    }}
+                    className="btn border-none text-white rounded-xl text-lg bg-linear-to-r from-rose-500 to-red-600 hover:scale-[1.02] duration-300"
+                  >
+                    <CircleX size={22} />
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        {/* Close Modal Outside Click */}
+        <form method="dialog" className="modal-backdrop">
+          <button>close</button>
+        </form>
+      </dialog>
+
+      {transactionData.length > 0 ? (
+        /* Get Transactions */
+        <div className="w-full overflow-hidden rounded-3xl border border-base-300 bg-base-100 shadow-xl mb-20">
+          {/* Scroll Container */}
+          <div className="overflow-x-auto overflow-y-auto max-h-screen">
+            <table className="table table-zebra min-w-225">
+              {/* head */}
+              <thead className="bg-base-200 text-base-content sticky top-0 z-10">
+                <tr>
+                  <th>#</th>
+                  <th>User</th>
+                  <th>Category</th>
+                  <th>Amount</th>
+                  <th>Date</th>
+                  <th>Type</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {transactionData.map((transaction, index) => (
+                  <tr key={transaction._id} className="hover">
+                    {/* Index */}
+                    <th>{index + 1}</th>
+
+                    {/* User Info */}
+                    <td>
+                      <div className="flex items-center gap-4 min-w-63">
+                        <div className="avatar">
+                          <div className="w-14 rounded-2xl ring ring-violet-300 ring-offset-base-100 ring-offset-2">
+                            <img src={user?.photoURL} alt="user-photo" />
+                          </div>
+                        </div>
+
+                        <div>
+                          <div className="font-bold text-lg">
+                            {transaction.name}
+                          </div>
+
+                          <div className="text-sm opacity-60 break-all">
+                            {transaction.email}
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+
+                    {/* Category */}
+                    <td>
+                      <span className="badge badge-primary badge-outline px-4 py-3 capitalize">
+                        {transaction.category}
+                      </span>
+                    </td>
+
+                    {/* Amount */}
+                    <td>
+                      <span
+                        className={`font-bold text-base ${
+                          transaction.type === 'Income'
+                            ? 'text-green-600'
+                            : 'text-red-500'
+                        }`}
+                      >
+                        ৳ {transaction.amount}
+                      </span>
+                    </td>
+
+                    {/* Date */}
+                    <td className="min-w-30">
+                      {/* {transaction.date?.split('T')[0]} */}
+                      {new Date(transaction.date).toISOString().split('T')[0]}
+                    </td>
+
+                    {/* Type */}
+                    <td>
+                      <span
+                        className={`badge px-4 py-3 text-white ${
+                          transaction.type === 'Income'
+                            ? 'badge-success'
+                            : 'badge-error'
+                        }`}
+                      >
+                        {transaction.type}
+                      </span>
+                    </td>
+
+                    {/* Action */}
+                    <td>
+                      <button
+                        onClick={() =>
+                          handleTransactionDetailsModalOpen(transaction)
+                        }
+                        className="btn btn-sm rounded-xl border-none text-white bg-linear-to-r from-violet-600 to-fuchsia-500 hover:scale-105 duration-300"
+                      >
+                        Details
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            <dialog ref={transactionsDetailsModalRef} className="modal">
+              <div className="modal-box rounded-3xl max-w-lg max-h-[90vh]">
+                {/* Header */}
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="p-3 rounded-2xl bg-linear-to-r from-violet-500 to-fuchsia-500 text-white">
+                    <FileText size={24} />
+                  </div>
+
+                  <div>
+                    <h3 className="text-2xl font-bold">Transaction Details</h3>
+
+                    <p className="text-sm opacity-60">
+                      Complete transaction information
+                    </p>
+                  </div>
+                </div>
+
+                {/* Details */}
+                <div className="space-y-4">
+                  <div className="bg-base-200 rounded-2xl p-4">
+                    <p className="text-sm opacity-60 mb-1">Transaction Type</p>
+
+                    <h2 className="font-bold text-lg">
+                      {selectedTransaction?.title}
+                    </h2>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-base-200 rounded-2xl p-4">
+                      <p className="text-sm opacity-60 mb-1">Amount</p>
+
+                      <h2
+                        className={`font-bold text-lg ${
+                          selectedTransaction?.type === 'Income'
+                            ? 'text-green-600'
+                            : 'text-red-500'
+                        }`}
+                      >
+                        $ {selectedTransaction?.amount}
+                      </h2>
+                    </div>
+
+                    <div className="bg-base-200 rounded-2xl p-4">
+                      <p className="text-sm opacity-60 mb-1">Category</p>
+
+                      <h2 className="font-bold capitalize">
+                        {selectedTransaction?.category}
+                      </h2>
+                    </div>
+                    <div className="bg-base-200 rounded-2xl p-4">
+                      <p className="text-sm opacity-60 mb-1">Date</p>
+
+                      <h2 className="font-bold capitalize">
+                        {new Date(selectedTransaction?.date).toLocaleDateString(
+                          'en-US',
+                        )}
+                      </h2>
+                    </div>
+                    <div className="bg-base-200 rounded-2xl p-4">
+                      <p className="text-sm opacity-60 mb-1">Type</p>
+
+                      <h2 className="font-bold capitalize">
+                        {selectedTransaction?.type}
+                      </h2>
+                    </div>
+                  </div>
+
+                  <div className="bg-base-200 rounded-2xl p-4">
+                    <p className="text-sm opacity-60 mb-1">Description</p>
+
+                    <p className="leading-relaxed">
+                      {selectedTransaction?.description}
+                    </p>
+                  </div>
+                  <div className="bg-base-200 rounded-2xl p-4">
+                    <p className="text-sm opacity-60 mb-1">
+                      Total Amount Of This Category & Type
+                    </p>
+
+                    <h2
+                      className={`font-bold text-lg ${
+                        selectedTransaction?.type === 'Income'
+                          ? 'text-green-600'
+                          : 'text-red-500'
+                      }`}
+                    >
+                      $ {totalCategoryAmount}
+                    </h2>
+                  </div>
+                </div>
+
+                {/* Button */}
+                <div className="flex justify-end mt-8">
+                  <button
+                    className="btn border-none text-white rounded-xl bg-linear-to-r from-rose-500 to-red-600"
+                    onClick={() => transactionsDetailsModalRef.current.close()}
+                  >
+                    <CircleX size={18} />
+                    Close
+                  </button>
+                </div>
+              </div>
+
+              <form method="dialog" className="modal-backdrop">
+                <button>close</button>
+              </form>
+            </dialog>
+          </div>
+        </div>
+      ) : (
+        <div>
+          <p className="py-10 text-xl text-gray-400">
+            Still, no transactions are added. Please create a transaction first.
+            Then check the transaction data.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default AddTransactions;
