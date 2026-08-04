@@ -3,7 +3,7 @@ import { WifiOff } from 'lucide-react';
 const ReconnectServer = () => {
   return (
     <div className="flex items-center justify-center py-20">
-      <div className="bg-base-100 rounded-3xl shadow-xl border border-base-300 px-10 py-8 max-w-md text-center">
+      <div className="bg-base-300 rounded-3xl shadow-xl border border-base-300 px-10 py-8 max-w-md text-center">
         <div className="mx-auto w-16 h-16 rounded-full bg-linear-to-r from-violet-600 to-fuchsia-500 flex items-center justify-center text-white animate-pulse">
           <WifiOff size={32} />
         </div>
@@ -23,6 +23,14 @@ const ReconnectServer = () => {
         </p>
 
         <div className="loading loading-spinner loading-lg text-primary mt-6"></div>
+        <div className="flex justify-center mt-8">
+          <button
+            onClick={() => window.location.reload()}
+            className="btn btn-outline btn-primary"
+          >
+            Refresh Page
+          </button>
+        </div>
       </div>
     </div>
   );

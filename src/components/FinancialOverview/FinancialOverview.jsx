@@ -98,12 +98,16 @@ import LoadingSpinner from '../LoadingSpinner/LoadingSpinner';
 import FinancialBalance from './FinancialBalance';
 import { AuthContext } from '../../provider/AuthContext';
 import ReconnectServer from '../ReconnectServer/ReconnectServer';
+import UnauthorizedAccess from '../UnauthorizedAccess/UnauthorizedAccess';
+import ForbiddenAccess from '../ForbiddenAccess/ForbiddenAccess';
 
 const FinancialOverview = () => {
   const { user } = use(AuthContext);
   const [balance, setBalance] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  // console.log('token', user.accessToken);
 
   // const fetchBalance = async () => {
   //   try {
@@ -175,10 +179,10 @@ const FinancialOverview = () => {
   useEffect(() => {
     if (!user?.email) {
       function loading() {
+        setBalance([]);
         setLoading(true);
         setTimeout(() => {
           setLoading(false);
-          setBalance([]);
         }, 2000);
       }
       loading();
@@ -189,9 +193,36 @@ const FinancialOverview = () => {
 
     const fetchBalance = async () => {
       try {
+        const token = await user.getIdToken();
         const res = await fetch(
           `http://localhost:3000/transactions?email=${user.email}`,
+          {
+            headers: {
+              authorization: `Bearer ${token}`,
+            },
+          },
         );
+
+        if (res.status === 401) {
+          setError('Unauthorized');
+          setLoading(false);
+
+          return 'unauthorized';
+        }
+
+        if (res.status === 403) {
+          setError('Forbidden');
+          setLoading(false);
+
+          return 'forbidden';
+        }
+
+        if (res.status >= 500) {
+          setLoading(false);
+          return 'server';
+        }
+
+        // console.log(res);
 
         if (!res.ok) {
           throw new Error('Server Error');
@@ -207,7 +238,7 @@ const FinancialOverview = () => {
       } catch (err) {
         console.error(err);
 
-        setError('Trying to reconnect...');
+        setError('Trying to reconnect');
         setLoading(false);
 
         return false;
@@ -217,9 +248,31 @@ const FinancialOverview = () => {
     const load = async () => {
       const success = await fetchBalance();
 
-      if (!success) {
+      if (success === 'unauthorized' || success === 'forbidden') {
+        return;
+      }
+      // if (success === 'forbidden') {
+      //   return;
+      // }
+
+      // if (!success || success === 'server') {
+      //   interval = setInterval(async () => {
+      //     if (await fetchBalance()) {
+      //       clearInterval(interval);
+      //     }
+      //   }, 3000);
+      // }
+
+      // ============== Retry only when server is down ======= option 2
+      if (success === 'server' || !success) {
         interval = setInterval(async () => {
-          if (await fetchBalance()) {
+          const retry = await fetchBalance();
+
+          if (
+            retry === true ||
+            retry === 'unauthorized' ||
+            retry === 'forbidden'
+          ) {
             clearInterval(interval);
           }
         }, 3000);
@@ -237,8 +290,16 @@ const FinancialOverview = () => {
     return <LoadingSpinner />;
   }
 
-  if (error) {
+  if (error === 'Trying to reconnect') {
     return <ReconnectServer />;
+  }
+
+  if (error === 'Unauthorized') {
+    return <UnauthorizedAccess />;
+  }
+
+  if (error === 'Forbidden') {
+    return <ForbiddenAccess />;
   }
 
   // const incomeData = balance.find(item => item.type === 'Income');

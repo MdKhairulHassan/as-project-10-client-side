@@ -41,7 +41,7 @@
 
 // export default AddTransactions;
 
-// ==============================================================
+// ===============================================================================================
 import { use, useEffect, useRef, useState } from 'react';
 import {
   Wallet,
@@ -58,10 +58,16 @@ import {
 import { toast } from 'react-toastify';
 import { AuthContext } from '../../provider/AuthContext';
 import { ThemeContext } from '../../provider/ThemeContext';
+import LoadingSpinner from '../../components/LoadingSpinner/LoadingSpinner';
+import ReconnectServer from '../../components/ReconnectServer/ReconnectServer';
+import UnauthorizedAccess from '../../components/UnauthorizedAccess/UnauthorizedAccess';
+import ForbiddenAccess from '../../components/ForbiddenAccess/ForbiddenAccess';
 
 const AddTransactions = () => {
   const { user } = use(AuthContext);
   const { theme } = use(ThemeContext);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   console.log(user);
 
@@ -103,7 +109,7 @@ const AddTransactions = () => {
         transaction.type === selectedTransaction?.type,
     )
     .reduce((total, transaction) => total + Number(transaction.amount), 0);
-  // =====================================================
+  // ===============================================================================================
   // const [transactionData, setTransactionData] = useState({
   //   // _id: '67f0a1b2c3d4e5f601000001',
   //   // title: 'Total Balance',
@@ -127,7 +133,7 @@ const AddTransactions = () => {
   //   });
   // };
 
-  // =====================================================
+  // ===============================================================================================
   // 1. Create a ref to hold the form data object
   // const transactionData = useRef({});
 
@@ -142,7 +148,7 @@ const AddTransactions = () => {
   //   };
   // };
 
-  // =====================================================
+  // ===============================================================================================
   const handleAddTransaction = e => {
     e.preventDefault();
 
@@ -205,21 +211,149 @@ const AddTransactions = () => {
       });
   };
 
-  // =====================================================
+  // ===============================================================================================
   // const handleCancel = () => {
   //   toast.error('Transaction Cancelled');
   // };
 
-  // =====================================================
-  useEffect(() => {
-    fetch('http://localhost:3000/transactions')
-      .then(res => res.json())
-      .then(data => {
-        setTransactionData(data);
-        console.log('transaction added', data);
-      });
-  }, []);
+  // ===============================================================================================
+  // useEffect(() => {
+  //   fetch('http://localhost:3000/transactions')
+  //     .then(res => res.json())
+  //     .then(data => {
+  //       setTransactionData(data);
+  //       console.log('transaction added', data);
+  //     });
+  // }, []);
 
+  // ===============================================================================================
+  useEffect(() => {
+    if (!user?.email) {
+      function loading() {
+        setTransactionData([]);
+        setLoading(true);
+        setTimeout(() => {
+          setLoading(false);
+        }, 2000);
+      }
+      loading();
+      return;
+    }
+
+    let interval;
+
+    const fetchBalance = async () => {
+      try {
+        const token = await user.getIdToken();
+        const res = await fetch(
+          `http://localhost:3000/transactions?email=${user.email}`,
+          {
+            headers: {
+              authorization: `Bearer ${token}`,
+            },
+          },
+        );
+
+        if (res.status === 401) {
+          setError('Unauthorized');
+          setLoading(false);
+
+          return 'unauthorized';
+        }
+
+        if (res.status === 403) {
+          setError('Forbidden');
+          setLoading(false);
+
+          return 'forbidden';
+        }
+
+        if (res.status >= 500) {
+          setLoading(false);
+          return 'server';
+        }
+
+        // console.log(res);
+
+        if (!res.ok) {
+          throw new Error('Server Error');
+        }
+
+        const data = await res.json();
+
+        setTransactionData(data);
+        setError('');
+        setLoading(false);
+
+        return true;
+      } catch (err) {
+        console.error(err);
+
+        setError('Trying to reconnect');
+        setLoading(false);
+
+        return false;
+      }
+    };
+
+    const load = async () => {
+      const success = await fetchBalance();
+
+      if (success === 'unauthorized' || success === 'forbidden') {
+        return;
+      }
+      // if (success === 'forbidden') {
+      //   return;
+      // }
+
+      // if (!success || success === 'server') {
+      //   interval = setInterval(async () => {
+      //     if (await fetchBalance()) {
+      //       clearInterval(interval);
+      //     }
+      //   }, 3000);
+      // }
+
+      // ============== Retry only when server is down ======= option 2
+      if (success === 'server' || !success) {
+        interval = setInterval(async () => {
+          const retry = await fetchBalance();
+
+          if (
+            retry === true ||
+            retry === 'unauthorized' ||
+            retry === 'forbidden'
+          ) {
+            clearInterval(interval);
+          }
+        }, 3000);
+      }
+    };
+
+    load();
+
+    return () => clearInterval(interval);
+  }, [user]);
+
+  // ===============================================================================================
+
+  if (loading) {
+    return <LoadingSpinner />;
+  }
+
+  if (error === 'Trying to reconnect') {
+    return <ReconnectServer />;
+  }
+
+  if (error === 'Unauthorized') {
+    return <UnauthorizedAccess />;
+  }
+
+  if (error === 'Forbidden') {
+    return <ForbiddenAccess />;
+  }
+
+  // ===============================================================================================
   return (
     <div className="max-w-11/12 mx-auto flex flex-col items-center justify-center p-4">
       <div className="text-center my-12">

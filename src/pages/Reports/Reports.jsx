@@ -7,25 +7,128 @@ import { Link } from 'react-router';
 import { IoIosArrowBack } from 'react-icons/io';
 import { IoBarChart } from 'react-icons/io5';
 import { ThemeContext } from '../../provider/ThemeContext';
+import LoadingSpinner from '../../components/LoadingSpinner/LoadingSpinner';
+import ReconnectServer from '../../components/ReconnectServer/ReconnectServer';
+import UnauthorizedAccess from '../../components/UnauthorizedAccess/UnauthorizedAccess';
+import ForbiddenAccess from '../../components/ForbiddenAccess/ForbiddenAccess';
 
 const Reports = () => {
   const { user } = use(AuthContext);
   const { theme } = use(ThemeContext);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
   const [transactions, setTransactions] = useState([]);
   const [selectedMonthYear, setSelectedMonthYear] = useState('');
   const now = new Date();
-  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(
-    2,
-    '0',
-  )}`;
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
   useEffect(() => {
-    // fetch(`http://localhost:3000/transactions?email=${user?.email}`)
-    fetch(`http://localhost:3000/transactions`)
-      .then(res => res.json())
-      .then(data => {
+    if (!user?.email) {
+      function loading() {
+        setTransactions([]);
+        setLoading(true);
+        setTimeout(() => {
+          setLoading(false);
+        }, 2000);
+      }
+      loading();
+      return;
+    }
+
+    let interval;
+
+    const fetchBalance = async () => {
+      try {
+        const token = await user.getIdToken();
+        const res = await fetch(
+          `http://localhost:3000/transactions?email=${user.email}`,
+          {
+            headers: {
+              authorization: `Bearer ${token}`,
+            },
+          },
+        );
+
+        if (res.status === 401) {
+          setError('Unauthorized');
+          setLoading(false);
+
+          return 'unauthorized';
+        }
+
+        if (res.status === 403) {
+          setError('Forbidden');
+          setLoading(false);
+
+          return 'forbidden';
+        }
+
+        if (res.status >= 500) {
+          setLoading(false);
+          return 'server';
+        }
+
+        // console.log(res);
+
+        if (!res.ok) {
+          throw new Error('Server Error');
+        }
+
+        const data = await res.json();
+
         setTransactions(data);
-      });
+        setError('');
+        setLoading(false);
+
+        return true;
+      } catch (err) {
+        console.error(err);
+
+        setError('Trying to reconnect');
+        setLoading(false);
+
+        return false;
+      }
+    };
+
+    const load = async () => {
+      const success = await fetchBalance();
+
+      if (success === 'unauthorized' || success === 'forbidden') {
+        return;
+      }
+      // if (success === 'forbidden') {
+      //   return;
+      // }
+
+      // if (!success || success === 'server') {
+      //   interval = setInterval(async () => {
+      //     if (await fetchBalance()) {
+      //       clearInterval(interval);
+      //     }
+      //   }, 3000);
+      // }
+
+      // ============== Retry only when server is down ======= option 2
+      if (success === 'server' || !success) {
+        interval = setInterval(async () => {
+          const retry = await fetchBalance();
+
+          if (
+            retry === true ||
+            retry === 'unauthorized' ||
+            retry === 'forbidden'
+          ) {
+            clearInterval(interval);
+          }
+        }, 3000);
+      }
+    };
+
+    load();
+
+    return () => clearInterval(interval);
   }, [user]);
 
   // =======================================================================
@@ -86,6 +189,23 @@ const Reports = () => {
     .reduce((sum, item) => sum + Number(item.amount), 0);
 
   const totalBalance = totalIncome - totalExpense;
+
+  // ===============================================================================================
+  if (loading) {
+    return <LoadingSpinner />;
+  }
+
+  if (error === 'Trying to reconnect') {
+    return <ReconnectServer />;
+  }
+
+  if (error === 'Unauthorized') {
+    return <UnauthorizedAccess />;
+  }
+
+  if (error === 'Forbidden') {
+    return <ForbiddenAccess />;
+  }
 
   return (
     <div className="max-w-11/12 mx-auto py-25">

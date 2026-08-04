@@ -34,7 +34,7 @@
 
 // export default AllTransactions;
 
-// ==================================================================================
+// ===============================================================================================
 import { use, useEffect, useRef, useState } from 'react';
 import MyTransactions from '../../components/MyTransactions/MyTransactions';
 import { AuthContext } from '../../provider/AuthContext';
@@ -44,6 +44,10 @@ import Swal from 'sweetalert2';
 import { Link } from 'react-router';
 import { IoIosArrowBack } from 'react-icons/io';
 import { ThemeContext } from '../../provider/ThemeContext';
+import LoadingSpinner from '../../components/LoadingSpinner/LoadingSpinner';
+import ReconnectServer from '../../components/ReconnectServer/ReconnectServer';
+import UnauthorizedAccess from '../../components/UnauthorizedAccess/UnauthorizedAccess';
+import ForbiddenAccess from '../../components/ForbiddenAccess/ForbiddenAccess';
 // import withReactContent from 'sweetalert2-react-content';
 
 // const MySwal = withReactContent(Swal);
@@ -51,6 +55,8 @@ import { ThemeContext } from '../../provider/ThemeContext';
 const AllTransactions = () => {
   const { user } = use(AuthContext);
   const { theme } = use(ThemeContext);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   const [transactions, setTransactions] = useState([]);
 
@@ -79,16 +85,127 @@ const AllTransactions = () => {
     )
     .reduce((total, transaction) => total + Number(transaction.amount), 0);
 
+  // useEffect(() => {
+  //   fetch(`http://localhost:3000/transactions`)
+  //     .then(res => res.json())
+  //     .then(data => {
+  //       setTransactions(data);
+  //       setSortedTransactions(data);
+  //     });
+  // }, [user]);
+
+  // ===============================================================================================
   useEffect(() => {
-    // fetch(`http://localhost:3000/transactions?email=${user?.email}`)
-    fetch(`http://localhost:3000/transactions`)
-      .then(res => res.json())
-      .then(data => {
+    if (!user?.email) {
+      function loading() {
+        setTransactions([]);
+        setSortedTransactions([]);
+        setLoading(true);
+        setTimeout(() => {
+          setLoading(false);
+        }, 2000);
+      }
+      loading();
+      return;
+    }
+
+    let interval;
+
+    const fetchBalance = async () => {
+      try {
+        const token = await user.getIdToken();
+        const res = await fetch(
+          `http://localhost:3000/transactions?email=${user.email}`,
+          {
+            headers: {
+              authorization: `Bearer ${token}`,
+            },
+          },
+        );
+
+        if (res.status === 401) {
+          setError('Unauthorized');
+          setLoading(false);
+
+          return 'unauthorized';
+        }
+
+        if (res.status === 403) {
+          setError('Forbidden');
+          setLoading(false);
+
+          return 'forbidden';
+        }
+
+        if (res.status >= 500) {
+          setLoading(false);
+          return 'server';
+        }
+
+        // console.log(res);
+
+        if (!res.ok) {
+          throw new Error('Server Error');
+        }
+
+        const data = await res.json();
+
         setTransactions(data);
         setSortedTransactions(data);
-      });
+        setError('');
+        setLoading(false);
+
+        return true;
+      } catch (err) {
+        console.error(err);
+
+        setError('Trying to reconnect');
+        setLoading(false);
+
+        return false;
+      }
+    };
+
+    const load = async () => {
+      const success = await fetchBalance();
+
+      if (success === 'unauthorized' || success === 'forbidden') {
+        return;
+      }
+      // if (success === 'forbidden') {
+      //   return;
+      // }
+
+      // if (!success || success === 'server') {
+      //   interval = setInterval(async () => {
+      //     if (await fetchBalance()) {
+      //       clearInterval(interval);
+      //     }
+      //   }, 3000);
+      // }
+
+      // ============== Retry only when server is down ======= option 2
+      if (success === 'server' || !success) {
+        interval = setInterval(async () => {
+          const retry = await fetchBalance();
+
+          if (
+            retry === true ||
+            retry === 'unauthorized' ||
+            retry === 'forbidden'
+          ) {
+            clearInterval(interval);
+          }
+        }, 3000);
+      }
+    };
+
+    load();
+
+    return () => clearInterval(interval);
   }, [user]);
 
+  // ===============================================================================================
   const handleView = transaction => {
     setSelectedTransaction(transaction);
 
@@ -345,6 +462,23 @@ const AllTransactions = () => {
     setSortedTransactions(sorted);
   };
 
+  // ===============================================================================================
+  if (loading) {
+    return <LoadingSpinner />;
+  }
+
+  if (error === 'Trying to reconnect') {
+    return <ReconnectServer />;
+  }
+
+  if (error === 'Unauthorized') {
+    return <UnauthorizedAccess />;
+  }
+
+  if (error === 'Forbidden') {
+    return <ForbiddenAccess />;
+  }
+
   return (
     <div className="max-w-11/12 mx-auto py-15">
       <div className="text-center mb-12">
@@ -363,7 +497,7 @@ const AllTransactions = () => {
               <label
                 tabIndex={0}
                 className={`btn ${
-                  sortedText !== 'default' && 'bg-[#7835ec] text-white'
+                  sortedText !== 'default' ? 'bg-[#7835ec] text-white' : ''
                 }`}
               >
                 Sort By
@@ -376,7 +510,7 @@ const AllTransactions = () => {
                 <li>
                   <summary
                     className={
-                      sortedText === 'default' && 'bg-[#7835ec] text-white'
+                      sortedText === 'default' ? 'bg-[#7835ec] text-white' : ''
                     }
                     onClick={() => handleSort('default')}
                   >
@@ -400,8 +534,13 @@ const AllTransactions = () => {
                     <ul>
                       <li>
                         <a
+                          // className={
+                          //   sortedText === 'newest' && 'bg-[#7835ec] text-white'
+                          // }
                           className={
-                            sortedText === 'newest' && 'bg-[#7835ec] text-white'
+                            sortedText === 'newest'
+                              ? 'bg-[#7835ec] text-white'
+                              : ''
                           }
                           onClick={() => handleSort('newest')}
                         >
@@ -412,7 +551,9 @@ const AllTransactions = () => {
                       <li>
                         <a
                           className={
-                            sortedText === 'oldest' && 'bg-[#7835ec] text-white'
+                            sortedText === 'oldest'
+                              ? 'bg-[#7835ec] text-white'
+                              : ''
                           }
                           onClick={() => handleSort('oldest')}
                         >
@@ -442,8 +583,9 @@ const AllTransactions = () => {
                       <li>
                         <a
                           className={
-                            sortedText === 'amountHigh' &&
-                            'bg-[#7835ec] text-white'
+                            sortedText === 'amountHigh'
+                              ? 'bg-[#7835ec] text-white'
+                              : ''
                           }
                           onClick={() => handleSort('amountHigh')}
                         >
@@ -454,8 +596,9 @@ const AllTransactions = () => {
                       <li>
                         <a
                           className={
-                            sortedText === 'amountLow' &&
-                            'bg-[#7835ec] text-white'
+                            sortedText === 'amountLow'
+                              ? 'bg-[#7835ec] text-white'
+                              : ''
                           }
                           onClick={() => handleSort('amountLow')}
                         >
@@ -484,7 +627,9 @@ const AllTransactions = () => {
                       <li>
                         <a
                           className={
-                            sortedText === 'income' && 'bg-[#7835ec] text-white'
+                            sortedText === 'income'
+                              ? 'bg-[#7835ec] text-white'
+                              : ''
                           }
                           onClick={() => handleSort('income')}
                         >
@@ -495,8 +640,9 @@ const AllTransactions = () => {
                       <li>
                         <a
                           className={
-                            sortedText === 'expense' &&
-                            'bg-[#7835ec] text-white'
+                            sortedText === 'expense'
+                              ? 'bg-[#7835ec] text-white'
+                              : ''
                           }
                           onClick={() => handleSort('expense')}
                         >
@@ -534,7 +680,9 @@ const AllTransactions = () => {
                       <li>
                         <a
                           className={
-                            sortedText === 'salary' && 'bg-[#7835ec] text-white'
+                            sortedText === 'salary'
+                              ? 'bg-[#7835ec] text-white'
+                              : ''
                           }
                           onClick={() => handleSort('salary')}
                         >
@@ -544,8 +692,9 @@ const AllTransactions = () => {
                       <li>
                         <a
                           className={
-                            sortedText === 'freelance' &&
-                            'bg-[#7835ec] text-white'
+                            sortedText === 'freelance'
+                              ? 'bg-[#7835ec] text-white'
+                              : ''
                           }
                           onClick={() => handleSort('freelance')}
                         >
@@ -555,8 +704,9 @@ const AllTransactions = () => {
                       <li>
                         <a
                           className={
-                            sortedText === 'business' &&
-                            'bg-[#7835ec] text-white'
+                            sortedText === 'business'
+                              ? 'bg-[#7835ec] text-white'
+                              : ''
                           }
                           onClick={() => handleSort('business')}
                         >
@@ -566,8 +716,9 @@ const AllTransactions = () => {
                       <li>
                         <a
                           className={
-                            sortedText === 'transport' &&
-                            'bg-[#7835ec] text-white'
+                            sortedText === 'transport'
+                              ? 'bg-[#7835ec] text-white'
+                              : ''
                           }
                           onClick={() => handleSort('transport')}
                         >
@@ -577,8 +728,9 @@ const AllTransactions = () => {
                       <li>
                         <a
                           className={
-                            sortedText === 'investment' &&
-                            'bg-[#7835ec] text-white'
+                            sortedText === 'investment'
+                              ? 'bg-[#7835ec] text-white'
+                              : ''
                           }
                           onClick={() => handleSort('investment')}
                         >
@@ -588,7 +740,9 @@ const AllTransactions = () => {
                       <li>
                         <a
                           className={
-                            sortedText === 'bill' && 'bg-[#7835ec] text-white'
+                            sortedText === 'bill'
+                              ? 'bg-[#7835ec] text-white'
+                              : ''
                           }
                           onClick={() => handleSort('bill')}
                         >
@@ -598,7 +752,9 @@ const AllTransactions = () => {
                       <li>
                         <a
                           className={
-                            sortedText === 'rent' && 'bg-[#7835ec] text-white'
+                            sortedText === 'rent'
+                              ? 'bg-[#7835ec] text-white'
+                              : ''
                           }
                           onClick={() => handleSort('rent')}
                         >
@@ -608,7 +764,9 @@ const AllTransactions = () => {
                       <li>
                         <a
                           className={
-                            sortedText === 'food' && 'bg-[#7835ec] text-white'
+                            sortedText === 'food'
+                              ? 'bg-[#7835ec] text-white'
+                              : ''
                           }
                           onClick={() => handleSort('food')}
                         >
@@ -618,7 +776,9 @@ const AllTransactions = () => {
                       <li>
                         <a
                           className={
-                            sortedText === 'buy' && 'bg-[#7835ec] text-white'
+                            sortedText === 'buy'
+                              ? 'bg-[#7835ec] text-white'
+                              : ''
                           }
                           onClick={() => handleSort('buy')}
                         >
@@ -628,7 +788,9 @@ const AllTransactions = () => {
                       <li>
                         <a
                           className={
-                            sortedText === 'others' && 'bg-[#7835ec] text-white'
+                            sortedText === 'others'
+                              ? 'bg-[#7835ec] text-white'
+                              : ''
                           }
                           onClick={() => handleSort('others')}
                         >
