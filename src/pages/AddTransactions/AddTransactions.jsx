@@ -227,24 +227,140 @@ const AddTransactions = () => {
   // }, []);
 
   // ===============================================================================================
+  // useEffect(() => {
+  //   if (!user?.email) {
+  //     const loading = () => {
+  //       setTransactionData([]);
+  //       setLoading(true);
+  //       setTimeout(() => {
+  //         setLoading(false);
+  //       }, 2000);
+  //     };
+  //     loading();
+  //     return;
+  //   }
+
+  //   let interval;
+
+  //   const fetchBalance = async () => {
+  //     try {
+  //       const token = await user.getIdToken();
+  //       const res = await fetch(
+  //         `http://localhost:3000/transactions?email=${user.email}`,
+  //         {
+  //           headers: {
+  //             authorization: `Bearer ${token}`,
+  //           },
+  //         },
+  //       );
+
+  //       if (res.status === 401) {
+  //         setError('Unauthorized');
+  //         setLoading(false);
+
+  //         return 'unauthorized';
+  //       }
+
+  //       if (res.status === 403) {
+  //         setError('Forbidden');
+  //         setLoading(false);
+
+  //         return 'forbidden';
+  //       }
+
+  //       if (res.status >= 500) {
+  //         setLoading(false);
+  //         return 'server';
+  //       }
+
+  //       // console.log(res);
+
+  //       if (!res.ok) {
+  //         throw new Error('Server Error');
+  //       }
+
+  //       const data = await res.json();
+
+  //       setTransactionData(data);
+  //       setError('');
+  //       setLoading(false);
+
+  //       return true;
+  //     } catch (err) {
+  //       console.error(err);
+
+  //       setError('Trying to reconnect');
+  //       setLoading(false);
+
+  //       return false;
+  //     }
+  //   };
+
+  //   const load = async () => {
+  //     const success = await fetchBalance();
+
+  //     if (success === 'unauthorized' || success === 'forbidden') {
+  //       return;
+  //     }
+  //     // if (success === 'forbidden') {
+  //     //   return;
+  //     // }
+
+  //     // if (!success || success === 'server') {
+  //     //   interval = setInterval(async () => {
+  //     //     if (await fetchBalance()) {
+  //     //       clearInterval(interval);
+  //     //     }
+  //     //   }, 3000);
+  //     // }
+
+  //     // ============== Retry only when server is down ======= option 2
+  //     if (success === 'server' || !success) {
+  //       interval = setInterval(async () => {
+  //         const retry = await fetchBalance();
+
+  //         if (
+  //           retry === true ||
+  //           retry === 'unauthorized' ||
+  //           retry === 'forbidden'
+  //         ) {
+  //           clearInterval(interval);
+  //         }
+  //       }, 3000);
+  //     }
+  //   };
+
+  //   load();
+
+  //   return () => clearInterval(interval);
+  // }, [user]);
+
+  // ===============================================================================================
   useEffect(() => {
     if (!user?.email) {
-      function loading() {
+      const loading = () => {
         setTransactionData([]);
         setLoading(true);
+
         setTimeout(() => {
           setLoading(false);
         }, 2000);
-      }
+      };
+
       loading();
       return;
     }
 
-    let interval;
+    let cancelled = false;
+
+    const MAX_RETRIES = 6;
+    const BASE_DELAY = 2000;
+    const MAX_DELAY = 60000;
 
     const fetchBalance = async () => {
       try {
         const token = await user.getIdToken();
+
         const res = await fetch(
           `http://localhost:3000/transactions?email=${user.email}`,
           {
@@ -254,6 +370,10 @@ const AddTransactions = () => {
           },
         );
 
+        // =====================================================
+        // 401 = Invalid/expired authentication
+        // NEVER retry
+        // =====================================================
         if (res.status === 401) {
           setError('Unauthorized');
           setLoading(false);
@@ -261,6 +381,10 @@ const AddTransactions = () => {
           return 'unauthorized';
         }
 
+        // =====================================================
+        // 403 = Authenticated but forbidden
+        // NEVER retry
+        // =====================================================
         if (res.status === 403) {
           setError('Forbidden');
           setLoading(false);
@@ -268,18 +392,28 @@ const AddTransactions = () => {
           return 'forbidden';
         }
 
+        // =====================================================
+        // 500+ = Server problem
+        // Retry with exponential backoff
+        // =====================================================
         if (res.status >= 500) {
           setLoading(false);
+
           return 'server';
         }
 
-        // console.log(res);
-
+        // =====================================================
+        // Other HTTP errors
+        // =====================================================
         if (!res.ok) {
-          throw new Error('Server Error');
+          throw new Error(`HTTP error: ${res.status}`);
         }
 
         const data = await res.json();
+
+        if (cancelled) {
+          return true;
+        }
 
         setTransactionData(data);
         setError('');
@@ -287,52 +421,113 @@ const AddTransactions = () => {
 
         return true;
       } catch (err) {
+        if (cancelled) {
+          return false;
+        }
+
         console.error(err);
 
         setError('Trying to reconnect');
         setLoading(false);
 
-        return false;
+        return 'network';
       }
     };
 
-    const load = async () => {
-      const success = await fetchBalance();
+    const wait = ms => {
+      return new Promise(resolve => {
+        setTimeout(resolve, ms);
+      });
+    };
 
-      if (success === 'unauthorized' || success === 'forbidden') {
+    const loadData = async () => {
+      const firstAttempt = await fetchBalance();
+
+      // =====================================================
+      // Successful request
+      // =====================================================
+      if (firstAttempt === true) {
         return;
       }
-      // if (success === 'forbidden') {
-      //   return;
-      // }
 
-      // if (!success || success === 'server') {
-      //   interval = setInterval(async () => {
-      //     if (await fetchBalance()) {
-      //       clearInterval(interval);
-      //     }
-      //   }, 3000);
-      // }
+      // =====================================================
+      // Authentication problems
+      // NEVER retry
+      // =====================================================
+      if (firstAttempt === 'unauthorized' || firstAttempt === 'forbidden') {
+        return;
+      }
 
-      // ============== Retry only when server is down ======= option 2
-      if (success === 'server' || !success) {
-        interval = setInterval(async () => {
-          const retry = await fetchBalance();
+      // =====================================================
+      // Server/network problem
+      // Start retry process
+      // =====================================================
+      for (let retryCount = 1; retryCount <= MAX_RETRIES; retryCount++) {
+        if (cancelled) {
+          return;
+        }
 
-          if (
-            retry === true ||
-            retry === 'unauthorized' ||
-            retry === 'forbidden'
-          ) {
-            clearInterval(interval);
-          }
-        }, 3000);
+        // Exponential backoff
+        const exponentialDelay = Math.min(
+          BASE_DELAY * 2 ** (retryCount - 1),
+          MAX_DELAY,
+        );
+
+        // Jitter: random value between 0 and 1000 ms
+        const jitter = Math.floor(Math.random() * 1000);
+
+        const delay = exponentialDelay + jitter;
+
+        console.log(`Retry ${retryCount}/${MAX_RETRIES} in ${delay}ms`);
+
+        await wait(delay);
+
+        if (cancelled) {
+          return;
+        }
+
+        const result = await fetchBalance();
+
+        // ===================================================
+        // Success → STOP retrying
+        // ===================================================
+        if (result === true) {
+          console.log('Server connection restored');
+          return;
+        }
+
+        // ===================================================
+        // 401 → STOP retrying
+        // ===================================================
+        if (result === 'unauthorized') {
+          return;
+        }
+
+        // ===================================================
+        // 403 → STOP retrying
+        // ===================================================
+        if (result === 'forbidden') {
+          return;
+        }
+
+        // Otherwise continue retrying
+      }
+
+      // =====================================================
+      // Maximum retry count reached
+      // =====================================================
+      if (!cancelled) {
+        console.log('Maximum retry attempts reached');
+
+        setError('Trying to reconnect');
       }
     };
 
-    load();
+    loadData();
 
-    return () => clearInterval(interval);
+    return () => {
+      cancelled = true;
+    };
   }, [user]);
 
   // ===============================================================================================
@@ -402,7 +597,7 @@ const AddTransactions = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   {/* Title */}
                   <div>
-                    <label className="label">
+                    <label className="label p-1">
                       <span className="label-text font-semibold">Title</span>
                     </label>
 
@@ -422,7 +617,7 @@ const AddTransactions = () => {
 
                   {/* Amount */}
                   <div>
-                    <label className="label">
+                    <label className="label p-1">
                       <span className="label-text font-semibold">Amount</span>
                     </label>
 
@@ -442,7 +637,7 @@ const AddTransactions = () => {
 
                   {/* Category */}
                   <div>
-                    <label className="label">
+                    <label className="label p-1">
                       <span className="label-text font-semibold">Category</span>
                     </label>
 
@@ -471,7 +666,7 @@ const AddTransactions = () => {
 
                   {/* Type */}
                   <div>
-                    <label className="label">
+                    <label className="label p-1">
                       <span className="label-text font-semibold">Type</span>
                     </label>
 
@@ -496,7 +691,7 @@ const AddTransactions = () => {
 
                   {/* Date */}
                   <div>
-                    <label className="label">
+                    <label className="label p-1">
                       <span className="label-text font-semibold">Date</span>
                     </label>
 
@@ -515,7 +710,7 @@ const AddTransactions = () => {
 
                   {/* Name */}
                   <div>
-                    <label className="label">
+                    <label className="label p-1">
                       <span className="label-text font-semibold">
                         User Name
                       </span>
@@ -538,7 +733,7 @@ const AddTransactions = () => {
 
                   {/* Email */}
                   <div className="md:col-span-2">
-                    <label className="label">
+                    <label className="label p-1">
                       <span className="label-text font-semibold">Email</span>
                     </label>
 
@@ -560,7 +755,7 @@ const AddTransactions = () => {
 
                 {/* Description */}
                 <div className="mt-5">
-                  <label className="label">
+                  <label className="label p-1">
                     <span className="label-text font-semibold">
                       Description
                     </span>

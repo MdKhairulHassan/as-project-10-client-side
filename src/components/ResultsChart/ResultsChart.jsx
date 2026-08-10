@@ -66,7 +66,7 @@ const ResultsChart = ({
             Amount: <strong>${data.amount}</strong>
           </p>
 
-          <p className="text-blue-500">
+          <p className="text-[#5c23be]">
             Date: <strong>{data.date || 'All Time Periods'}</strong>
           </p>
         </div>
@@ -77,8 +77,10 @@ const ResultsChart = ({
   };
 
   return (
-    <div className="w-4/5 h-120 mt-15 mb-20">
-      <p className="text-[#5c23be] text-lg font-bold">Report By Chart</p>
+    <div className="w-4/5 h-120 mt-1 mb-15">
+      <p className="text-[#5c23be] text-lg font-bold pb-2">
+        Report By Transaction Type Chart:
+      </p>
       <ResponsiveContainer width="100%" height="100%">
         <BarChart
           width={650}
@@ -135,16 +137,16 @@ const ResultsChart = ({
                   entry.type === 'Income' && theme === 'light'
                     ? '#14ff99'
                     : entry.type === 'Income' && theme === 'dark'
-                      ? '#19422a'
+                      ? '#82ca9d'
                       : entry.type === 'Expense' && theme === 'light'
                         ? '#ff1b1bec'
                         : entry.type === 'Expense' && theme === 'dark'
-                          ? '#8B0000'
+                          ? '#dc5454ec'
                           : entry.type !== 'Expense' &&
                               entry.type !== 'Income' &&
                               theme !== 'dark'
                             ? '#9400D3'
-                            : '#5b0453'
+                            : '#8884d8'
                 }
               />
             ))}

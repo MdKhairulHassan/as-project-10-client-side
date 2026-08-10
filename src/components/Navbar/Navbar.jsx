@@ -116,7 +116,7 @@ const Navbar = () => {
         )}
       </li>
       <li>
-        <button
+        {/* <button
           onClick={toggleTheme}
           className={`flex flex-col hover:bg-[#c09cff86]`}
         >
@@ -128,7 +128,22 @@ const Navbar = () => {
           <span className="text-[0.70rem] text-secondary ">
             {theme === 'light' ? 'Dark Mode' : 'Light Mode'}
           </span>
-        </button>
+        </button> */}
+
+        <label className="flex cursor-pointer gap-2 ml-10 hover:bg-[#c09cff86]">
+          <MdLightMode
+            className={`text-lg ${theme === 'light' ? 'text-yellow-500' : 'text-primary'}`}
+          />
+          <input
+            onClick={toggleTheme}
+            type="checkbox"
+            value="synthwave"
+            className="toggle theme-controller bg-[#98ffdd] hover:bg-[#c09cff86]"
+          />
+          <MdDarkMode
+            className={`text-lg ${theme === 'light' ? 'text-primary' : 'text-[#98ffdd]'}`}
+          />
+        </label>
       </li>
     </>
   );
@@ -176,7 +191,7 @@ const Navbar = () => {
             </NavLink>
           </div>
           <div className="navbar-center hidden lg:flex">
-            <ul className="menu menu-horizontal px-1">{links}</ul>
+            <ul className="menu menu-horizontal items-center px-1">{links}</ul>
           </div>
           <div className="navbar-end gap-x-5">
             <NavLink

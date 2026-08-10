@@ -11,6 +11,7 @@ import LoadingSpinner from '../../components/LoadingSpinner/LoadingSpinner';
 import ReconnectServer from '../../components/ReconnectServer/ReconnectServer';
 import UnauthorizedAccess from '../../components/UnauthorizedAccess/UnauthorizedAccess';
 import ForbiddenAccess from '../../components/ForbiddenAccess/ForbiddenAccess';
+import CategoryChart from '../../components/CategoryChart/CategoryChart';
 
 const Reports = () => {
   const { user } = use(AuthContext);
@@ -20,27 +21,154 @@ const Reports = () => {
 
   const [transactions, setTransactions] = useState([]);
   const [selectedMonthYear, setSelectedMonthYear] = useState('');
+  // const [category, setCategory] = useState('');
+  const [category, setCategory] = useState(
+    localStorage.getItem('filter') || 'type',
+  );
+
+  useEffect(() => {
+    document.documentElement.setAttribute('transaction-type', category);
+    localStorage.setItem('filter', category);
+  }, [category]);
+
   const now = new Date();
   const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
+  // ===============================================================================================
+  // useEffect(() => {
+  //   if (!user?.email) {
+  //     const loading = () => {
+  //       setTransactions([]);
+  //       setLoading(true);
+  //       setTimeout(() => {
+  //         setLoading(false);
+  //       }, 2000);
+  //     };
+  //     loading();
+  //     return;
+  //   }
+
+  //   let interval;
+
+  //   const fetchBalance = async () => {
+  //     try {
+  //       const token = await user.getIdToken();
+  //       const res = await fetch(
+  //         `http://localhost:3000/transactions?email=${user.email}`,
+  //         {
+  //           headers: {
+  //             authorization: `Bearer ${token}`,
+  //           },
+  //         },
+  //       );
+
+  //       if (res.status === 401) {
+  //         setError('Unauthorized');
+  //         setLoading(false);
+
+  //         return 'unauthorized';
+  //       }
+
+  //       if (res.status === 403) {
+  //         setError('Forbidden');
+  //         setLoading(false);
+
+  //         return 'forbidden';
+  //       }
+
+  //       if (res.status >= 500) {
+  //         setLoading(false);
+  //         return 'server';
+  //       }
+
+  //       // console.log(res);
+
+  //       if (!res.ok) {
+  //         throw new Error('Server Error');
+  //       }
+
+  //       const data = await res.json();
+
+  //       setTransactions(data);
+  //       setError('');
+  //       setLoading(false);
+
+  //       return true;
+  //     } catch (err) {
+  //       console.error(err);
+
+  //       setError('Trying to reconnect');
+  //       setLoading(false);
+
+  //       return false;
+  //     }
+  //   };
+
+  //   const load = async () => {
+  //     const success = await fetchBalance();
+
+  //     if (success === 'unauthorized' || success === 'forbidden') {
+  //       return;
+  //     }
+  //     // if (success === 'forbidden') {
+  //     //   return;
+  //     // }
+
+  //     // if (!success || success === 'server') {
+  //     //   interval = setInterval(async () => {
+  //     //     if (await fetchBalance()) {
+  //     //       clearInterval(interval);
+  //     //     }
+  //     //   }, 3000);
+  //     // }
+
+  //     // ============== Retry only when server is down ======= option 2
+  //     if (success === 'server' || !success) {
+  //       interval = setInterval(async () => {
+  //         const retry = await fetchBalance();
+
+  //         if (
+  //           retry === true ||
+  //           retry === 'unauthorized' ||
+  //           retry === 'forbidden'
+  //         ) {
+  //           clearInterval(interval);
+  //         }
+  //       }, 3000);
+  //     }
+  //   };
+
+  //   load();
+
+  //   return () => clearInterval(interval);
+  // }, [user]);
+
+  // ===============================================================================================
   useEffect(() => {
     if (!user?.email) {
-      function loading() {
+      const loading = () => {
         setTransactions([]);
         setLoading(true);
+
         setTimeout(() => {
           setLoading(false);
         }, 2000);
-      }
+      };
+
       loading();
       return;
     }
 
-    let interval;
+    let cancelled = false;
+
+    const MAX_RETRIES = 6;
+    const BASE_DELAY = 2000;
+    const MAX_DELAY = 60000;
 
     const fetchBalance = async () => {
       try {
         const token = await user.getIdToken();
+
         const res = await fetch(
           `http://localhost:3000/transactions?email=${user.email}`,
           {
@@ -50,6 +178,10 @@ const Reports = () => {
           },
         );
 
+        // =====================================================
+        // 401 = Invalid/expired authentication
+        // NEVER retry
+        // =====================================================
         if (res.status === 401) {
           setError('Unauthorized');
           setLoading(false);
@@ -57,6 +189,10 @@ const Reports = () => {
           return 'unauthorized';
         }
 
+        // =====================================================
+        // 403 = Authenticated but forbidden
+        // NEVER retry
+        // =====================================================
         if (res.status === 403) {
           setError('Forbidden');
           setLoading(false);
@@ -64,18 +200,28 @@ const Reports = () => {
           return 'forbidden';
         }
 
+        // =====================================================
+        // 500+ = Server problem
+        // Retry with exponential backoff
+        // =====================================================
         if (res.status >= 500) {
           setLoading(false);
+
           return 'server';
         }
 
-        // console.log(res);
-
+        // =====================================================
+        // Other HTTP errors
+        // =====================================================
         if (!res.ok) {
-          throw new Error('Server Error');
+          throw new Error(`HTTP error: ${res.status}`);
         }
 
         const data = await res.json();
+
+        if (cancelled) {
+          return true;
+        }
 
         setTransactions(data);
         setError('');
@@ -83,52 +229,113 @@ const Reports = () => {
 
         return true;
       } catch (err) {
+        if (cancelled) {
+          return false;
+        }
+
         console.error(err);
 
         setError('Trying to reconnect');
         setLoading(false);
 
-        return false;
+        return 'network';
       }
     };
 
-    const load = async () => {
-      const success = await fetchBalance();
+    const wait = ms => {
+      return new Promise(resolve => {
+        setTimeout(resolve, ms);
+      });
+    };
 
-      if (success === 'unauthorized' || success === 'forbidden') {
+    const loadData = async () => {
+      const firstAttempt = await fetchBalance();
+
+      // =====================================================
+      // Successful request
+      // =====================================================
+      if (firstAttempt === true) {
         return;
       }
-      // if (success === 'forbidden') {
-      //   return;
-      // }
 
-      // if (!success || success === 'server') {
-      //   interval = setInterval(async () => {
-      //     if (await fetchBalance()) {
-      //       clearInterval(interval);
-      //     }
-      //   }, 3000);
-      // }
+      // =====================================================
+      // Authentication problems
+      // NEVER retry
+      // =====================================================
+      if (firstAttempt === 'unauthorized' || firstAttempt === 'forbidden') {
+        return;
+      }
 
-      // ============== Retry only when server is down ======= option 2
-      if (success === 'server' || !success) {
-        interval = setInterval(async () => {
-          const retry = await fetchBalance();
+      // =====================================================
+      // Server/network problem
+      // Start retry process
+      // =====================================================
+      for (let retryCount = 1; retryCount <= MAX_RETRIES; retryCount++) {
+        if (cancelled) {
+          return;
+        }
 
-          if (
-            retry === true ||
-            retry === 'unauthorized' ||
-            retry === 'forbidden'
-          ) {
-            clearInterval(interval);
-          }
-        }, 3000);
+        // Exponential backoff
+        const exponentialDelay = Math.min(
+          BASE_DELAY * 2 ** (retryCount - 1),
+          MAX_DELAY,
+        );
+
+        // Jitter: random value between 0 and 1000 ms
+        const jitter = Math.floor(Math.random() * 1000);
+
+        const delay = exponentialDelay + jitter;
+
+        console.log(`Retry ${retryCount}/${MAX_RETRIES} in ${delay}ms`);
+
+        await wait(delay);
+
+        if (cancelled) {
+          return;
+        }
+
+        const result = await fetchBalance();
+
+        // ===================================================
+        // Success → STOP retrying
+        // ===================================================
+        if (result === true) {
+          console.log('Server connection restored');
+          return;
+        }
+
+        // ===================================================
+        // 401 → STOP retrying
+        // ===================================================
+        if (result === 'unauthorized') {
+          return;
+        }
+
+        // ===================================================
+        // 403 → STOP retrying
+        // ===================================================
+        if (result === 'forbidden') {
+          return;
+        }
+
+        // Otherwise continue retrying
+      }
+
+      // =====================================================
+      // Maximum retry count reached
+      // =====================================================
+      if (!cancelled) {
+        console.log('Maximum retry attempts reached');
+
+        setError('Trying to reconnect');
       }
     };
 
-    load();
+    loadData();
 
-    return () => clearInterval(interval);
+    return () => {
+      cancelled = true;
+    };
   }, [user]);
 
   // =======================================================================
@@ -155,7 +362,7 @@ const Reports = () => {
 
     setSelectedMonthYear(sortTime);
   };
-  console.log(selectedMonthYear);
+  // console.log(selectedMonthYear);
 
   const filteredTransactions =
     selectedMonthYear === ''
@@ -189,6 +396,91 @@ const Reports = () => {
     .reduce((sum, item) => sum + Number(item.amount), 0);
 
   const totalBalance = totalIncome - totalExpense;
+
+  // ===============================================================================================
+  const income = filteredTransactions.filter(item => item.type === 'Income');
+
+  const expense = filteredTransactions.filter(item => item.type === 'Expense');
+
+  const salaryIncomeAmount = income
+    .filter(item => item.category === 'salary')
+    .reduce((sum, item) => sum + Number(item.amount), 0);
+
+  const salaryExpenseAmount = expense
+    .filter(item => item.category === 'salary')
+    .reduce((sum, item) => sum + Number(item.amount), 0);
+
+  const freelanceIncomeAmount = income
+    .filter(item => item.category === 'freelance')
+    .reduce((sum, item) => sum + Number(item.amount), 0);
+
+  const freelanceExpenseAmount = expense
+    .filter(item => item.category === 'freelance')
+    .reduce((sum, item) => sum + Number(item.amount), 0);
+
+  const businessIncomeAmount = income
+    .filter(item => item.category === 'business')
+    .reduce((sum, item) => sum + Number(item.amount), 0);
+
+  const businessExpenseAmount = expense
+    .filter(item => item.category === 'business')
+    .reduce((sum, item) => sum + Number(item.amount), 0);
+
+  const transportIncomeAmount = income
+    .filter(item => item.category === 'transport')
+    .reduce((sum, item) => sum + Number(item.amount), 0);
+
+  const transportExpenseAmount = expense
+    .filter(item => item.category === 'transport')
+    .reduce((sum, item) => sum + Number(item.amount), 0);
+
+  const investmentIncomeAmount = income
+    .filter(item => item.category === 'investment')
+    .reduce((sum, item) => sum + Number(item.amount), 0);
+
+  const investmentExpenseAmount = expense
+    .filter(item => item.category === 'investment')
+    .reduce((sum, item) => sum + Number(item.amount), 0);
+
+  const billIncomeAmount = income
+    .filter(item => item.category === 'bill')
+    .reduce((sum, item) => sum + Number(item.amount), 0);
+
+  const billExpenseAmount = expense
+    .filter(item => item.category === 'bill')
+    .reduce((sum, item) => sum + Number(item.amount), 0);
+
+  const rentIncomeAmount = income
+    .filter(item => item.category === 'rent')
+    .reduce((sum, item) => sum + Number(item.amount), 0);
+
+  const rentExpenseAmount = expense
+    .filter(item => item.category === 'rent')
+    .reduce((sum, item) => sum + Number(item.amount), 0);
+
+  const foodIncomeAmount = income
+    .filter(item => item.category === 'food')
+    .reduce((sum, item) => sum + Number(item.amount), 0);
+
+  const foodExpenseAmount = expense
+    .filter(item => item.category === 'food')
+    .reduce((sum, item) => sum + Number(item.amount), 0);
+
+  const buyIncomeAmount = income
+    .filter(item => item.category === 'buy')
+    .reduce((sum, item) => sum + Number(item.amount), 0);
+
+  const buyExpenseAmount = expense
+    .filter(item => item.category === 'buy')
+    .reduce((sum, item) => sum + Number(item.amount), 0);
+
+  const othersIncomeAmount = income
+    .filter(item => item.category === 'others')
+    .reduce((sum, item) => sum + Number(item.amount), 0);
+
+  const othersExpenseAmount = expense
+    .filter(item => item.category === 'others')
+    .reduce((sum, item) => sum + Number(item.amount), 0);
 
   // ===============================================================================================
   if (loading) {
@@ -328,18 +620,58 @@ const Reports = () => {
                 </div>
               </form>
             </div>
+            <div className="flex justify-end gap-x-3 px-5 py-2">
+              <button
+                onClick={() => setCategory('bycategory')}
+                className={`btn rounded-xl border-none text-white px-5 hover:bg-emerald-700 ${category === 'bycategory' ? 'bg-emerald-700' : 'bg-[#10B981]'}`}
+              >
+                Report By Category
+              </button>
+              <button
+                onClick={() => setCategory('type')}
+                className={`btn rounded-xl border-none text-white px-5 hover:bg-emerald-700 ${category === 'bycategory' ? 'bg-[#10B981]' : 'bg-emerald-700'}`}
+              >
+                Report By Transaction Type
+              </button>
+            </div>
           </div>
 
           {filteredTransactions.length > 0 ? (
             <>
               <div className="flex justify-center">
                 <div className="w-full">
-                  <ResultsChart
-                    totalIncome={totalIncome}
-                    totalExpense={totalExpense}
-                    totalBalance={totalBalance}
-                    selectedMonthYear={selectedMonthYear}
-                  />
+                  {category === 'bycategory' ? (
+                    <CategoryChart
+                      salaryIncomeAmount={salaryIncomeAmount}
+                      salaryExpenseAmount={salaryExpenseAmount}
+                      freelanceIncomeAmount={freelanceIncomeAmount}
+                      freelanceExpenseAmount={freelanceExpenseAmount}
+                      businessIncomeAmount={businessIncomeAmount}
+                      businessExpenseAmount={businessExpenseAmount}
+                      transportIncomeAmount={transportIncomeAmount}
+                      transportExpenseAmount={transportExpenseAmount}
+                      investmentIncomeAmount={investmentIncomeAmount}
+                      investmentExpenseAmount={investmentExpenseAmount}
+                      billIncomeAmount={billIncomeAmount}
+                      billExpenseAmount={billExpenseAmount}
+                      rentIncomeAmount={rentIncomeAmount}
+                      rentExpenseAmount={rentExpenseAmount}
+                      foodIncomeAmount={foodIncomeAmount}
+                      foodExpenseAmount={foodExpenseAmount}
+                      buyIncomeAmount={buyIncomeAmount}
+                      buyExpenseAmount={buyExpenseAmount}
+                      othersIncomeAmount={othersIncomeAmount}
+                      othersExpenseAmount={othersExpenseAmount}
+                      selectedMonthYear={selectedMonthYear}
+                    />
+                  ) : (
+                    <ResultsChart
+                      totalIncome={totalIncome}
+                      totalExpense={totalExpense}
+                      totalBalance={totalBalance}
+                      selectedMonthYear={selectedMonthYear}
+                    />
+                  )}
                   <p className="text-gray-400 text-xl font-medium text-center underline">
                     Chart of the transactions
                   </p>

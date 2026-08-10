@@ -142,7 +142,7 @@ const FinancialBalance = ({ totalBalance, totalIncome, totalExpense }) => {
                   theme === 'dark' ? 'text-white' : 'text-[#3b3b3b]'
                 }`}
               >
-                Current Income
+                Total Income
               </p>
               {/* <div className="mt-2">
                 <Link
@@ -164,7 +164,7 @@ const FinancialBalance = ({ totalBalance, totalIncome, totalExpense }) => {
               theme === 'dark' ? 'text-white' : 'text-[#3b3b3b]'
             }`}
           >
-            Total Expenses
+            Total Expense
           </p>
           <div className="">
             <GiExpense className="text-9xl text-[#ffffffb2] ml-5" />
@@ -190,7 +190,7 @@ const FinancialBalance = ({ totalBalance, totalIncome, totalExpense }) => {
                     theme === 'dark' ? 'text-white' : 'text-[#3b3b3b]'
                   }`}
                 >
-                  Income
+                  Expense
                 </p>
               </div>
               {totalExpense === null || totalExpense === undefined ? (
@@ -209,7 +209,7 @@ const FinancialBalance = ({ totalBalance, totalIncome, totalExpense }) => {
                   theme === 'dark' ? 'text-white' : 'text-[#3b3b3b]'
                 }`}
               >
-                Current Expenses
+                Total Expense
               </p>
             </div>
           </div>
