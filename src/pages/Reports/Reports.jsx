@@ -174,6 +174,7 @@ const Reports = () => {
           {
             headers: {
               authorization: `Bearer ${token}`,
+              // authorization: `Bearer ${localStorage.getItem('token')}`,
             },
           },
         );
