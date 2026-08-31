@@ -93,16 +93,22 @@
 // export default FinancialOverview;
 
 // ===============================================================================================
-import { use, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import LoadingSpinner from '../LoadingSpinner/LoadingSpinner';
 import FinancialBalance from './FinancialBalance';
-import { AuthContext } from '../../provider/AuthContext';
+// import { AuthContext } from '../../provider/AuthContext';
 import ReconnectServer from '../ReconnectServer/ReconnectServer';
 import UnauthorizedAccess from '../UnauthorizedAccess/UnauthorizedAccess';
 import ForbiddenAccess from '../ForbiddenAccess/ForbiddenAccess';
+import AxiosUseSecure from '../../provider/AxiosUseSecure';
+import AxiosUseAuthProvider from '../../provider/AxiosUseAuthProvider';
+import { useNavigate } from 'react-router';
 
 const FinancialOverview = () => {
-  const { user } = use(AuthContext);
+  // const { user } = use(AuthContext);
+  const [{ user, logOut }] = AxiosUseAuthProvider();
+  const navigate = useNavigate();
+  const axiosSecure = AxiosUseSecure();
   const [balance, setBalance] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -285,97 +291,337 @@ const FinancialOverview = () => {
   // }, [user]);
 
   // ===============================================================================================
+  // useEffect(() => {
+  //   if (!user?.email) {
+  //     const loading = () => {
+  //       setBalance([]);
+  //       setLoading(true);
+
+  //       setTimeout(() => {
+  //         setLoading(false);
+  //       }, 2000);
+  //     };
+
+  //     loading();
+  //     return;
+  //   }
+
+  //   let cancelled = false;
+
+  //   const MAX_RETRIES = 6;
+  //   const BASE_DELAY = 2000;
+  //   const MAX_DELAY = 60000;
+
+  //   const fetchBalance = async () => {
+  //     try {
+  //       const token = await user.getIdToken();
+
+  //       const res = await fetch(
+  //         `http://localhost:3000/transactions?email=${user.email}`,
+  //         {
+  //           headers: {
+  //             authorization: `Bearer ${token}`,
+  //             // authorization: `Bearer ${localStorage.getItem('token')}`,
+  //           },
+  //         },
+  //       );
+
+  //       // =====================================================
+  //       // 401 = Invalid/expired authentication
+  //       // NEVER retry
+  //       // =====================================================
+  //       if (res.status === 401) {
+  //         setError('Unauthorized');
+  //         setLoading(false);
+
+  //         return 'unauthorized';
+  //       }
+
+  //       // =====================================================
+  //       // 403 = Authenticated but forbidden
+  //       // NEVER retry
+  //       // =====================================================
+  //       if (res.status === 403) {
+  //         setError('Forbidden');
+  //         setLoading(false);
+
+  //         return 'forbidden';
+  //       }
+
+  //       // =====================================================
+  //       // 500+ = Server problem
+  //       // Retry with exponential backoff
+  //       // =====================================================
+  //       if (res.status >= 500) {
+  //         setLoading(false);
+
+  //         return 'server';
+  //       }
+
+  //       // =====================================================
+  //       // Other HTTP errors
+  //       // =====================================================
+  //       if (!res.ok) {
+  //         throw new Error(`HTTP error: ${res.status}`);
+  //       }
+
+  //       const data = await res.json();
+
+  //       if (cancelled) {
+  //         return true;
+  //       }
+
+  //       setBalance(data);
+  //       setError('');
+  //       setLoading(false);
+
+  //       return true;
+  //     } catch (err) {
+  //       if (cancelled) {
+  //         return false;
+  //       }
+
+  //       console.error(err);
+
+  //       setError('Trying to reconnect');
+  //       setLoading(false);
+
+  //       return 'network';
+  //     }
+  //   };
+
+  //   const wait = ms => {
+  //     return new Promise(resolve => {
+  //       setTimeout(resolve, ms);
+  //     });
+  //   };
+
+  //   const loadData = async () => {
+  //     const firstAttempt = await fetchBalance();
+
+  //     // =====================================================
+  //     // Successful request
+  //     // =====================================================
+  //     if (firstAttempt === true) {
+  //       return;
+  //     }
+
+  //     // =====================================================
+  //     // Authentication problems
+  //     // NEVER retry
+  //     // =====================================================
+  //     if (firstAttempt === 'unauthorized' || firstAttempt === 'forbidden') {
+  //       return;
+  //     }
+
+  //     // =====================================================
+  //     // Server/network problem
+  //     // Start retry process
+  //     // =====================================================
+  //     for (let retryCount = 1; retryCount <= MAX_RETRIES; retryCount++) {
+  //       if (cancelled) {
+  //         return;
+  //       }
+
+  //       // Exponential backoff
+  //       const exponentialDelay = Math.min(
+  //         BASE_DELAY * 2 ** (retryCount - 1),
+  //         MAX_DELAY,
+  //       );
+
+  //       // Jitter: random value between 0 and 1000 ms
+  //       const jitter = Math.floor(Math.random() * 1000);
+
+  //       const delay = exponentialDelay + jitter;
+
+  //       console.log(`Retry ${retryCount}/${MAX_RETRIES} in ${delay}ms`);
+
+  //       await wait(delay);
+
+  //       if (cancelled) {
+  //         return;
+  //       }
+
+  //       const result = await fetchBalance();
+
+  //       // ===================================================
+  //       // Success → STOP retrying
+  //       // ===================================================
+  //       if (result === true) {
+  //         console.log('Server connection restored');
+  //         return;
+  //       }
+
+  //       // ===================================================
+  //       // 401 → STOP retrying
+  //       // ===================================================
+  //       if (result === 'unauthorized') {
+  //         return;
+  //       }
+
+  //       // ===================================================
+  //       // 403 → STOP retrying
+  //       // ===================================================
+  //       if (result === 'forbidden') {
+  //         return;
+  //       }
+
+  //       // Otherwise continue retrying
+  //     }
+
+  //     // =====================================================
+  //     // Maximum retry count reached
+  //     // =====================================================
+  //     if (!cancelled) {
+  //       console.log('Maximum retry attempts reached');
+
+  //       setError('Trying to reconnect');
+  //     }
+  //   };
+
+  //   loadData();
+
+  //   return () => {
+  //     cancelled = true;
+  //   };
+  // }, [user]);
+
+  // ===============================================================================================
   useEffect(() => {
     if (!user?.email) {
       const loading = () => {
         setBalance([]);
-        setLoading(true);
-
-        setTimeout(() => {
-          setLoading(false);
-        }, 2000);
+        // setLoading(true);
+        setLoading(false);
       };
-
       loading();
+      // const timer = setTimeout(() => {
+      //   setLoading(false);
+      // }, 1000);
+
+      // return () => clearTimeout(timer);
       return;
     }
 
     let cancelled = false;
+    let redirectTimerOne;
+    let redirectTimerTwo;
 
     const MAX_RETRIES = 6;
     const BASE_DELAY = 2000;
     const MAX_DELAY = 60000;
 
+    const wait = ms => {
+      return new Promise(resolve => {
+        setTimeout(resolve, ms);
+      });
+    };
+
     const fetchBalance = async () => {
       try {
-        const token = await user.getIdToken();
-
-        const res = await fetch(
-          `http://localhost:3000/transactions?email=${user.email}`,
-          {
-            headers: {
-              authorization: `Bearer ${token}`,
-              // authorization: `Bearer ${localStorage.getItem('token')}`,
-            },
-          },
+        const response = await axiosSecure.get(
+          `/transactions?email=${user.email}`,
         );
 
-        // =====================================================
-        // 401 = Invalid/expired authentication
-        // NEVER retry
-        // =====================================================
-        if (res.status === 401) {
-          setError('Unauthorized');
-          setLoading(false);
-
-          return 'unauthorized';
-        }
-
-        // =====================================================
-        // 403 = Authenticated but forbidden
-        // NEVER retry
-        // =====================================================
-        if (res.status === 403) {
-          setError('Forbidden');
-          setLoading(false);
-
-          return 'forbidden';
-        }
-
-        // =====================================================
-        // 500+ = Server problem
-        // Retry with exponential backoff
-        // =====================================================
-        if (res.status >= 500) {
-          setLoading(false);
-
-          return 'server';
-        }
-
-        // =====================================================
-        // Other HTTP errors
-        // =====================================================
-        if (!res.ok) {
-          throw new Error(`HTTP error: ${res.status}`);
-        }
-
-        const data = await res.json();
+        // header.Authorization is case-insensitive.
+        // const response = await axios.get(
+        //   `http://localhost:3000/transactions?email=${user.email}`,
+        //   {
+        //     headers: {
+        //       Authorization: `Bearer ${token}`,
+        //     },
+        //   },
+        // );
 
         if (cancelled) {
-          return true;
+          return 'cancelled';
         }
 
-        setBalance(data);
+        setBalance(response.data);
         setError('');
         setLoading(false);
 
-        return true;
-      } catch (err) {
+        return 'success';
+      } catch (error) {
         if (cancelled) {
-          return false;
+          return 'cancelled';
         }
 
-        console.error(err);
+        // ============================================
+        // Axios HTTP error
+        // ============================================
+
+        if (error.response) {
+          const status = error.response?.status;
+
+          // 401
+          if (status === 401) {
+            setError('Unauthorized');
+            setLoading(false);
+
+            redirectTimerOne = setTimeout(() => {
+              if (!cancelled) {
+                logOut();
+                navigate('/auth/login', { replace: true });
+              }
+            }, 3000);
+
+            return 'unauthorized';
+          }
+
+          // 403
+          if (status === 403) {
+            setError('Forbidden');
+            setLoading(false);
+
+            redirectTimerTwo = setTimeout(() => {
+              if (!cancelled) {
+                logOut();
+                navigate('/auth/login', { replace: true });
+              }
+            }, 3000);
+
+            return 'forbidden';
+          }
+
+          // 500+
+          if (status >= 500) {
+            console.log(`Server error: ${status}`);
+
+            setError('Trying to reconnect');
+            setLoading(false);
+
+            return 'server';
+          }
+
+          // Other HTTP errors
+          console.log(`HTTP error: ${status}`);
+
+          setError('Trying to reconnect');
+          setLoading(false);
+
+          return 'network';
+        }
+
+        // ============================================
+        // Network error
+        // Server completely unreachable
+        // ============================================
+
+        if (error.request) {
+          console.log('Server/network connection failed');
+
+          setError('Trying to reconnect');
+          setLoading(false);
+
+          return 'network';
+        }
+
+        // ============================================
+        // Axios/request configuration error
+        // ============================================
+
+        console.log('Axios error:', error.message);
 
         setError('Trying to reconnect');
         setLoading(false);
@@ -384,34 +630,38 @@ const FinancialOverview = () => {
       }
     };
 
-    const wait = ms => {
-      return new Promise(resolve => {
-        setTimeout(resolve, ms);
-      });
-    };
-
     const loadData = async () => {
+      // ============================================
+      // First request
+      // ============================================
+
       const firstAttempt = await fetchBalance();
 
-      // =====================================================
-      // Successful request
-      // =====================================================
-      if (firstAttempt === true) {
+      if (cancelled) {
         return;
       }
 
-      // =====================================================
-      // Authentication problems
+      // ============================================
+      // Success
+      // ============================================
+
+      if (firstAttempt === 'success') {
+        return;
+      }
+
+      // ============================================
+      // Authentication errors
       // NEVER retry
-      // =====================================================
+      // ============================================
+
       if (firstAttempt === 'unauthorized' || firstAttempt === 'forbidden') {
         return;
       }
 
-      // =====================================================
-      // Server/network problem
-      // Start retry process
-      // =====================================================
+      // ============================================
+      // Retry server/network problems
+      // ============================================
+
       for (let retryCount = 1; retryCount <= MAX_RETRIES; retryCount++) {
         if (cancelled) {
           return;
@@ -423,7 +673,7 @@ const FinancialOverview = () => {
           MAX_DELAY,
         );
 
-        // Jitter: random value between 0 and 1000 ms
+        // Random 0-1000ms
         const jitter = Math.floor(Math.random() * 1000);
 
         const delay = exponentialDelay + jitter;
@@ -438,34 +688,31 @@ const FinancialOverview = () => {
 
         const result = await fetchBalance();
 
-        // ===================================================
-        // Success → STOP retrying
-        // ===================================================
-        if (result === true) {
+        // ============================================
+        // Server recovered
+        // ============================================
+
+        if (result === 'success') {
           console.log('Server connection restored');
           return;
         }
 
-        // ===================================================
-        // 401 → STOP retrying
-        // ===================================================
-        if (result === 'unauthorized') {
-          return;
-        }
+        // ============================================
+        // Authentication error
+        // Stop retrying
+        // ============================================
 
-        // ===================================================
-        // 403 → STOP retrying
-        // ===================================================
-        if (result === 'forbidden') {
+        if (result === 'unauthorized' || result === 'forbidden') {
           return;
         }
 
         // Otherwise continue retrying
       }
 
-      // =====================================================
-      // Maximum retry count reached
-      // =====================================================
+      // ============================================
+      // Maximum retries reached
+      // ============================================
+
       if (!cancelled) {
         console.log('Maximum retry attempts reached');
 
@@ -477,8 +724,10 @@ const FinancialOverview = () => {
 
     return () => {
       cancelled = true;
+      clearTimeout(redirectTimerOne);
+      clearTimeout(redirectTimerTwo);
     };
-  }, [user]);
+  }, [user, axiosSecure, logOut, navigate]);
 
   // ===============================================================================================
 
@@ -532,6 +781,6 @@ const FinancialOverview = () => {
       />
     </div>
   );
-};
+};;
 
 export default FinancialOverview;

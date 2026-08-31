@@ -42,7 +42,7 @@
 // export default AddTransactions;
 
 // ===============================================================================================
-import { use, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Wallet,
   CirclePlus,
@@ -55,17 +55,34 @@ import {
   Mail,
   DollarSign,
 } from 'lucide-react';
-import { toast } from 'react-toastify';
-import { AuthContext } from '../../provider/AuthContext';
-import { ThemeContext } from '../../provider/ThemeContext';
+// import { toast } from 'react-toastify';
+// import { AuthContext } from '../../provider/AuthContext';
+// import { ThemeContext } from '../../provider/ThemeContext';
 import LoadingSpinner from '../../components/LoadingSpinner/LoadingSpinner';
 import ReconnectServer from '../../components/ReconnectServer/ReconnectServer';
 import UnauthorizedAccess from '../../components/UnauthorizedAccess/UnauthorizedAccess';
 import ForbiddenAccess from '../../components/ForbiddenAccess/ForbiddenAccess';
+// import axios from 'axios';
+import AxiosUseAuthProvider from '../../provider/AxiosUseAuthProvider';
+// import AxiosUseInstance from '../../provider/AxiosUseInstance';
+import AxiosUseSecure from '../../provider/AxiosUseSecure';
+import Swal from 'sweetalert2';
 
 const AddTransactions = () => {
-  const { user } = use(AuthContext);
-  const { theme } = use(ThemeContext);
+  // ======== Destructuring from object
+  // const { user } = use(AuthContext);
+
+  // ======== Destructuring from object of objects
+  // const {
+  //   axiosAuthInfo: { user },
+  //   axiosAuthTheme: { theme },
+  // } = AxiosUseAuthProvider();
+
+  // ======== Destructuring from array of objects
+  const [{ user }, { theme }] = AxiosUseAuthProvider();
+  // const axiosInstance = AxiosUseInstance();
+  const axiosSecure = AxiosUseSecure();
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -90,6 +107,7 @@ const AddTransactions = () => {
 
   const [transactionData, setTransactionData] = useState([]);
   const [selectedTransaction, setSelectedTransaction] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   console.log('final data', transactionData);
 
@@ -149,7 +167,39 @@ const AddTransactions = () => {
   // };
 
   // ===============================================================================================
-  const handleAddTransaction = e => {
+  const getTransactionErrorMessage = error => {
+    const status = error.response?.status;
+
+    if (!status) {
+      return 'Cannot reach the server. Check your connection and try again.';
+    }
+
+    if (status === 400) {
+      return (
+        error.response.data?.message || 'Please check the transaction details.'
+      );
+    }
+
+    if (status === 401) {
+      return 'Your sign-in session has expired. Please sign in again.';
+    }
+
+    if (status === 403) {
+      return 'You do not have permission to add this transaction.';
+    }
+
+    if (status === 409) {
+      return 'This transaction already exists.';
+    }
+
+    if (status >= 500) {
+      return 'The server has a problem. Please try again shortly.';
+    }
+    return 'Unable to add the transaction. Please try again.';
+  };
+
+  // ===============================================================================================
+  const handleAddTransaction = async e => {
     e.preventDefault();
 
     const form = e.target; // e.target IS the <form> element here
@@ -176,39 +226,181 @@ const AddTransactions = () => {
 
     // console.log(newTransaction);
 
-    addTransactionsModalRef.current.close();
+    // addTransactionsModalRef.current.close();
 
-    fetch('http://localhost:3000/transactions', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify(newTransaction),
-    })
-      .then(res => res.json())
-      .then(data => {
-        const savedTransaction = {
-          ...newTransaction,
-          _id: data.insertedId,
-        };
-        setTransactionData(prev => [savedTransaction, ...prev]);
-        // setTransactionData(prev => [...prev, savedTransaction]);
-        // setTransactionData(prev => [...prev, data]);
+    // =============================================================================
+    // fetch('http://localhost:3000/transactions', {
+    //   method: 'POST',
+    //   headers: {
+    //     'content-type': 'application/json',
+    //   },
+    //   body: JSON.stringify(newTransaction),
+    // })
+    //   .then(res => res.json())
+    //   .then(data => {
+    //     const savedTransaction = {
+    //       ...newTransaction,
+    //       _id: data.insertedId,
+    //     };
+    //     setTransactionData(prev => [savedTransaction, ...prev]);
+    //     // setTransactionData(prev => [...prev, savedTransaction]);
+    //     // setTransactionData(prev => [...prev, data]);
 
-        console.log('after placing transaction', data);
+    //     console.log('after placing transaction', data);
 
-        if (data.insertedId) {
-          toast.success('Transaction Added Successfully', {
-            theme: theme,
-          });
-          addTransactionsModalRef.current.close();
-          e.target.reset();
-        }
-      })
-      .catch(() => {
-        // console.error(error);
-        toast.error('Failed to add transaction. Please try again.');
+    //     if (data.insertedId) {
+    //       toast.success('Transaction Added Successfully', {
+    //         theme: theme,
+    //       });
+    //       addTransactionsModalRef.current.close();
+    //       e.target.reset();
+    //     }
+    //   })
+    //   .catch(() => {
+    //     // console.error(error);
+    //     toast.error('Failed to add transaction. Please try again.');
+    //   });
+
+    // =============================================================================
+    // axios
+    //   .post('http://localhost:3000/transactions', newTransaction)
+    //   .then(data => {
+    //     const savedTransaction = {
+    //       ...newTransaction,
+    //       _id: data.data.insertedId,
+    //     };
+    //     setTransactionData(prev => [savedTransaction, ...prev]);
+    //     // setTransactionData(prev => [...prev, savedTransaction]);
+    //     // setTransactionData(prev => [...prev, data]);
+
+    //     console.log('after placing transaction', data.data);
+
+    //     if (data.data.insertedId) {
+    //       toast.success('Transaction Added Successfully', {
+    //         theme: theme,
+    //       });
+    //       addTransactionsModalRef.current.close();
+    //       e.target.reset();
+    //     }
+    //   })
+    //   .catch(() => {
+    //     // console.error(error);
+    //     toast.error('Failed to add transaction. Please try again.', {
+    //       theme: theme,
+    //     });
+    //   });
+
+    // =============================================================================
+    // await axiosSecure
+    //   .post('/transactions', newTransaction)
+    //   .then(data => {
+    //     const savedTransaction = {
+    //       ...newTransaction,
+    //       _id: data.data.insertedId,
+    //     };
+    //     setTransactionData(prev => [savedTransaction, ...prev]);
+    //     // setTransactionData(prev => [...prev, savedTransaction]);
+    //     // setTransactionData(prev => [...prev, data]);
+
+    //     console.log('after placing transaction', data.data);
+
+    //     if (data.data.insertedId) {
+    //       toast.success('Transaction Added Successfully', {
+    //         theme: theme,
+    //       });
+    //       addTransactionsModalRef.current.close();
+    //       e.target.reset();
+    //     }
+    //   })
+    //   .catch(() => {
+    //     // console.error(error);
+    //     toast.error('Failed to add transaction. Please try again.', {
+    //       theme: theme,
+    //     });
+    //   });
+
+    // =============================================================================
+    // await axiosSecure
+    //   .post('/transactions', newTransaction)
+    //   .then(data => {
+    //     const savedTransaction = {
+    //       ...newTransaction,
+    //       _id: data.data.insertedId,
+    //     };
+    //     setTransactionData(prev => [savedTransaction, ...prev]);
+    //     // setTransactionData(prev => [...prev, savedTransaction]);
+    //     // setTransactionData(prev => [...prev, data]);
+
+    //     console.log('after placing transaction', data.data);
+
+    //     if (data.data.insertedId) {
+    //       toast.success('Transaction Added Successfully', {
+    //         theme: theme,
+    //       });
+    //       addTransactionsModalRef.current.close();
+    //       e.target.reset();
+    //     }
+    //   })
+    //   .catch(() => {
+    //     // console.error(error);
+    //     toast.error('Failed to add transaction. Please try again.', {
+    //       theme: theme,
+    //     });
+    //   });
+
+    // =============================================================================
+    try {
+      setIsSubmitting(true);
+
+      const response = await axiosSecure.post('/transactions', newTransaction);
+
+      const savedTransaction = {
+        ...newTransaction,
+        _id: response.data.insertedId,
+      };
+
+      setTransactionData(previous => [savedTransaction, ...previous]);
+
+      Swal.fire({
+        title: 'Transaction added successfully',
+        text: 'Now check the added transaction.',
+        icon: 'success',
+
+        background: theme === 'dark' ? '#1D232A' : '#FFFFFF',
+
+        color: theme === 'dark' ? '#F8FAFC' : '#111827',
+
+        confirmButtonColor: '#5c23be',
       });
+
+      // toast.success('Transaction added successfully.', {
+      //   theme,
+      // });
+
+      form.reset();
+      addTransactionsModalRef.current.close();
+    } catch (error) {
+      // console.error('Add transaction failed:', error);
+
+      Swal.fire({
+        title: 'Failed to add transaction',
+        text: getTransactionErrorMessage(error),
+        icon: 'error',
+
+        background: theme === 'dark' ? '#1D232A' : '#FFFFFF',
+
+        color: theme === 'dark' ? '#F8FAFC' : '#111827',
+
+        confirmButtonColor: '#5c23be',
+      });
+      addTransactionsModalRef.current.close();
+
+      // toast.error(getTransactionErrorMessage(error), {
+      //   theme,
+      // });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // ===============================================================================================
@@ -780,10 +972,11 @@ const AddTransactions = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
                   <button
                     type="submit"
-                    className="btn border-none text-white rounded-xl text-lg bg-linear-to-r from-violet-600 to-fuchsia-500 hover:scale-[1.02] duration-300"
+                    disabled={isSubmitting}
+                    className={`btn border-none text-white rounded-xl text-lg bg-linear-to-r from-violet-600 to-fuchsia-500 hover:scale-[1.02] duration-300 ${isSubmitting && 'bg-linear from-gray-600 to-gray-400'}`}
                   >
                     <CirclePlus size={22} />
-                    Add Transaction
+                    {isSubmitting ? 'Adding Transaction...' : 'Add Transaction'}
                   </button>
 
                   <button
