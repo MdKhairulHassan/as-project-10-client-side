@@ -68,6 +68,7 @@ import AxiosUseAuthProvider from '../../provider/AxiosUseAuthProvider';
 import AxiosUseSecure from '../../provider/AxiosUseSecure';
 import Swal from 'sweetalert2';
 import { useNavigate } from 'react-router';
+import BadRequest from '../../components/BadRequest/BadRequest';
 
 const AddTransactions = () => {
   // ======== Destructuring from object
@@ -797,6 +798,14 @@ const AddTransactions = () => {
         if (error.response) {
           const status = error.response?.status;
 
+          // 400
+          if (status === 400) {
+            setError('Bad Request');
+            setLoading(false);
+
+            return 'badrequest';
+          }
+
           // 401
           if (status === 401) {
             setError('Unauthorized');
@@ -897,7 +906,11 @@ const AddTransactions = () => {
       // NEVER retry
       // ============================================
 
-      if (firstAttempt === 'unauthorized' || firstAttempt === 'forbidden') {
+      if (
+        firstAttempt === 'unauthorized' ||
+        firstAttempt === 'forbidden' ||
+        firstAttempt === 'badrequest'
+      ) {
         return;
       }
 
@@ -945,7 +958,11 @@ const AddTransactions = () => {
         // Stop retrying
         // ============================================
 
-        if (result === 'unauthorized' || result === 'forbidden') {
+        if (
+          result === 'unauthorized' ||
+          result === 'forbidden' ||
+          result === 'badrequest'
+        ) {
           return;
         }
 
@@ -973,7 +990,6 @@ const AddTransactions = () => {
   }, [user, axiosSecure, logOut, navigate]);
 
   // ===============================================================================================
-
   if (loading) {
     return <LoadingSpinner />;
   }
@@ -988,6 +1004,10 @@ const AddTransactions = () => {
 
   if (error === 'Forbidden') {
     return <ForbiddenAccess />;
+  }
+
+  if (error === 'Bad Request') {
+    return <BadRequest />;
   }
 
   // ===============================================================================================

@@ -103,6 +103,7 @@ import ForbiddenAccess from '../ForbiddenAccess/ForbiddenAccess';
 import AxiosUseSecure from '../../provider/AxiosUseSecure';
 import AxiosUseAuthProvider from '../../provider/AxiosUseAuthProvider';
 import { useNavigate } from 'react-router';
+import BadRequest from '../BadRequest/BadRequest';
 
 const FinancialOverview = () => {
   // const { user } = use(AuthContext);
@@ -559,6 +560,14 @@ const FinancialOverview = () => {
         if (error.response) {
           const status = error.response?.status;
 
+          // 400
+          if (status === 400) {
+            setError('Bad Request');
+            setLoading(false);
+
+            return 'badrequest';
+          }
+
           // 401
           if (status === 401) {
             setError('Unauthorized');
@@ -659,7 +668,11 @@ const FinancialOverview = () => {
       // NEVER retry
       // ============================================
 
-      if (firstAttempt === 'unauthorized' || firstAttempt === 'forbidden') {
+      if (
+        firstAttempt === 'unauthorized' ||
+        firstAttempt === 'forbidden' ||
+        firstAttempt === 'badrequest'
+      ) {
         return;
       }
 
@@ -707,7 +720,11 @@ const FinancialOverview = () => {
         // Stop retrying
         // ============================================
 
-        if (result === 'unauthorized' || result === 'forbidden') {
+        if (
+          result === 'unauthorized' ||
+          result === 'forbidden' ||
+          result === 'badrequest'
+        ) {
           return;
         }
 
@@ -776,6 +793,10 @@ const FinancialOverview = () => {
 
   if (error === 'Forbidden') {
     return <ForbiddenAccess />;
+  }
+
+  if (error === 'Bad Request') {
+    return <BadRequest />;
   }
 
   // ===============================================================================================

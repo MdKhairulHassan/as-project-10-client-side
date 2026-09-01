@@ -51,6 +51,7 @@ import UnauthorizedAccess from '../../components/UnauthorizedAccess/Unauthorized
 import ForbiddenAccess from '../../components/ForbiddenAccess/ForbiddenAccess';
 import AxiosUseSecure from '../../provider/AxiosUseSecure';
 import AxiosUseAuthProvider from '../../provider/AxiosUseAuthProvider';
+import BadRequest from '../../components/BadRequest/BadRequest';
 
 // const MySwal = withReactContent(Swal);
 
@@ -72,6 +73,7 @@ const AllTransactions = () => {
   const [selectedTransaction, setSelectedTransaction] = useState(null);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const detailsRef = useRef(null);
 
@@ -485,6 +487,14 @@ const AllTransactions = () => {
         if (error.response) {
           const status = error.response?.status;
 
+          // 400
+          if (status === 400) {
+            setError('Bad Request');
+            setLoading(false);
+
+            return 'badrequest';
+          }
+
           // 401
           if (status === 401) {
             setError('Unauthorized');
@@ -585,7 +595,11 @@ const AllTransactions = () => {
       // NEVER retry
       // ============================================
 
-      if (firstAttempt === 'unauthorized' || firstAttempt === 'forbidden') {
+      if (
+        firstAttempt === 'unauthorized' ||
+        firstAttempt === 'forbidden' ||
+        firstAttempt === 'badrequest'
+      ) {
         return;
       }
 
@@ -633,7 +647,11 @@ const AllTransactions = () => {
         // Stop retrying
         // ============================================
 
-        if (result === 'unauthorized' || result === 'forbidden') {
+        if (
+          result === 'unauthorized' ||
+          result === 'forbidden' ||
+          result === 'badrequest'
+        ) {
           return;
         }
 
@@ -839,51 +857,112 @@ const AllTransactions = () => {
     }
   };
 
-  const handleDelete = id => {
-    Swal.fire({
+  // =============================================================================================
+  // const handleDelete = id => {
+  //   Swal.fire({
+  //     title: 'Are you sure?',
+  //     text: "You won't be able to revert this!",
+  //     icon: 'warning',
+  //     background: theme === 'dark' ? '#1D232A' : '#FFFFFF',
+
+  //     color: theme === 'dark' ? '#F8FAFC' : '#111827',
+
+  //     showCancelButton: true,
+  //     confirmButtonColor: '#3085d6',
+  //     cancelButtonColor: '#d33',
+  //     confirmButtonText: 'Yes, delete it!',
+  //   }).then(result => {
+  //     if (result.isConfirmed)
+  //       fetch(
+  //         `http://localhost:3000/transactions/${id}`,
+
+  //         {
+  //           method: 'DELETE',
+  //         },
+  //       )
+  //         .then(res => res.json())
+
+  //         .then(() => {
+  //           // setTransactions(prev => prev.filter(item => item._id !== id));
+
+  //           const updatedList = transactions.filter(item => item._id !== id);
+
+  //           setTransactions(updatedList);
+  //           setSortedTransactions(updatedList);
+
+  //           // toast.success('Deleted Successfully');
+
+  //           Swal.fire({
+  //             title: 'Deleted!',
+  //             text: 'Your transaction has been deleted.',
+  //             icon: 'success',
+  //             background: theme === 'dark' ? '#1D232A' : '#FFFFFF',
+  //             color: theme === 'dark' ? '#F8FAFC' : '#111827',
+  //           });
+  //         });
+  //   });
+  // };
+
+  // ==========================================
+  const handleDelete = async id => {
+    const confirmation = await Swal.fire({
       title: 'Are you sure?',
       text: "You won't be able to revert this!",
       icon: 'warning',
       background: theme === 'dark' ? '#1D232A' : '#FFFFFF',
-
       color: theme === 'dark' ? '#F8FAFC' : '#111827',
-
       showCancelButton: true,
       confirmButtonColor: '#3085d6',
       cancelButtonColor: '#d33',
       confirmButtonText: 'Yes, delete it!',
-    }).then(result => {
-      if (result.isConfirmed)
-        fetch(
-          `http://localhost:3000/transactions/${id}`,
-
-          {
-            method: 'DELETE',
-          },
-        )
-          .then(res => res.json())
-
-          .then(() => {
-            // setTransactions(prev => prev.filter(item => item._id !== id));
-
-            const updatedList = transactions.filter(item => item._id !== id);
-
-            setTransactions(updatedList);
-            setSortedTransactions(updatedList);
-
-            // toast.success('Deleted Successfully');
-
-            Swal.fire({
-              title: 'Deleted!',
-              text: 'Your transaction has been deleted.',
-              icon: 'success',
-              background: theme === 'dark' ? '#1D232A' : '#FFFFFF',
-              color: theme === 'dark' ? '#F8FAFC' : '#111827',
-            });
-          });
     });
+
+    if (!confirmation.isConfirmed) {
+      return;
+    }
+
+    try {
+      setIsDeleting(true);
+
+      const response = await axiosSecure.delete(`/transactions/${id}`);
+
+      if (response.data.deletedCount !== 1) {
+        throw new Error('Transaction was not found.');
+      }
+
+      setTransactions(previous =>
+        previous.filter(transaction => transaction._id !== id),
+      );
+
+      setSortedTransactions(previous =>
+        previous.filter(transaction => transaction._id !== id),
+      );
+
+      Swal.fire({
+        title: 'Deleted!',
+        text: 'Your transaction has been deleted.',
+        icon: 'success',
+        background: theme === 'dark' ? '#1D232A' : '#FFFFFF',
+        color: theme === 'dark' ? '#F8FAFC' : '#111827',
+        confirmButtonColor: '#5c23be',
+      });
+    } catch (error) {
+      console.error('Delete transaction failed:', error);
+
+      Swal.fire({
+        title: 'Failed to delete transaction',
+        text: getTransactionErrorMessage(error),
+        icon: 'error',
+        background: theme === 'dark' ? '#1D232A' : '#FFFFFF',
+        color: theme === 'dark' ? '#F8FAFC' : '#111827',
+        confirmButtonColor: '#5c23be',
+      });
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
+  // =============================================================================================
   const handleSort = value => {
     let sorted = [...transactions];
 
@@ -1034,7 +1113,11 @@ const AllTransactions = () => {
   if (error === 'Forbidden') {
     return <ForbiddenAccess />;
   }
+  if (error === 'Bad Request') {
+    return <BadRequest />;
+  }
 
+  // ===============================================================================================
   return (
     <div className="max-w-11/12 mx-auto py-15">
       <div className="text-center mb-12">
@@ -1400,6 +1483,7 @@ const AllTransactions = () => {
                     handleView={handleView}
                     handleEdit={handleEdit}
                     handleDelete={handleDelete}
+                    isDeleting={isDeleting}
                   />
                 ))}
               </tbody>

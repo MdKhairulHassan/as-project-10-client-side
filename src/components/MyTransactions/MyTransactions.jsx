@@ -5,6 +5,7 @@ const MyTransactions = ({
   handleEdit,
   handleDelete,
   user,
+  isDeleting,
 }) => {
   return (
     <tr className="hover">
@@ -72,9 +73,9 @@ const MyTransactions = ({
 
           <button
             onClick={() => handleDelete(transaction._id)}
-            className="btn btn-xs btn-error"
+            className={`btn btn-xs btn-error ${isDeleting && 'bg-red-600'}`}
           >
-            Delete
+            {isDeleting ? 'Deleting...' : 'Delete'}
           </button>
         </div>
       </td>

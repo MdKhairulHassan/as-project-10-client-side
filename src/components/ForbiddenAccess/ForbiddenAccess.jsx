@@ -1,13 +1,16 @@
+// import { use } from 'react';
+// import { AuthContext } from '../../provider/AuthContext';
+// import { ThemeContext } from '../../provider/ThemeContext';
 import { ShieldAlert } from 'lucide-react';
-import { use } from 'react';
 import { toast } from 'react-toastify';
-import { AuthContext } from '../../provider/AuthContext';
-import { ThemeContext } from '../../provider/ThemeContext';
 import { useNavigate } from 'react-router';
+import AxiosUseAuthProvider from '../../provider/AxiosUseAuthProvider';
 
 const ForbiddenAccess = () => {
-  const { logOut } = use(AuthContext);
-  const { theme } = use(ThemeContext);
+  // const { logOut } = use(AuthContext);
+  // const { theme } = use(ThemeContext);
+
+  const [{ logOut }, { theme }] = AxiosUseAuthProvider();
   const navigate = useNavigate();
 
   const handleLogOut = async () => {
