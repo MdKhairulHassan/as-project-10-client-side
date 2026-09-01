@@ -113,6 +113,7 @@ const FinancialOverview = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  // ===============================================================================================
   // console.log('token', user.accessToken);
 
   // const fetchBalance = async () => {
@@ -137,6 +138,7 @@ const FinancialOverview = () => {
   //   }
   // };
 
+  // ===============================================================================================
   // // ======= fetchBalance().then() this line have a warning from ESLint. so try to avoid writing code like this.
   // // useEffect(() => {
   // //   let interval;
@@ -519,10 +521,12 @@ const FinancialOverview = () => {
 
     const fetchBalance = async () => {
       try {
+        // ========================================
         const response = await axiosSecure.get(
           `/transactions?email=${user.email}`,
         );
 
+        // ========================================
         // header.Authorization is case-insensitive.
         // const response = await axios.get(
         //   `http://localhost:3000/transactions?email=${user.email}`,
@@ -533,6 +537,7 @@ const FinancialOverview = () => {
         //   },
         // );
 
+        // ========================================
         if (cancelled) {
           return 'cancelled';
         }
@@ -730,28 +735,12 @@ const FinancialOverview = () => {
   }, [user, axiosSecure, logOut, navigate]);
 
   // ===============================================================================================
-
-  if (loading) {
-    return <LoadingSpinner />;
-  }
-
-  if (error === 'Trying to reconnect') {
-    return <ReconnectServer />;
-  }
-
-  if (error === 'Unauthorized') {
-    return <UnauthorizedAccess />;
-  }
-
-  if (error === 'Forbidden') {
-    return <ForbiddenAccess />;
-  }
-
   // const incomeData = balance.find(item => item.type === 'Income');
   // const expensesData = balance.find(item => item.type === 'Expense');
 
   // const balanceData = incomeData - expensesData;
 
+  // ===============================================================================================
   const { totalIncome, totalExpense } = balance.reduce(
     (acc, item) => {
       if (item.type === 'Income') {
@@ -772,6 +761,24 @@ const FinancialOverview = () => {
 
   console.log(totalBalance, totalIncome, totalExpense);
 
+  // ===============================================================================================
+  if (loading) {
+    return <LoadingSpinner />;
+  }
+
+  if (error === 'Trying to reconnect') {
+    return <ReconnectServer />;
+  }
+
+  if (error === 'Unauthorized') {
+    return <UnauthorizedAccess />;
+  }
+
+  if (error === 'Forbidden') {
+    return <ForbiddenAccess />;
+  }
+
+  // ===============================================================================================
   return (
     <div className="py-10">
       <FinancialBalance
@@ -781,6 +788,6 @@ const FinancialOverview = () => {
       />
     </div>
   );
-};;
+};
 
 export default FinancialOverview;
