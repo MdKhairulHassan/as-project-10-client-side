@@ -793,11 +793,14 @@ const Reports = () => {
     <div className="max-w-11/12 mx-auto py-25">
       <div className="text-center mb-16">
         <h2 className="text-4xl font-bold text-[#5c23be]">
-          Report Of The Transactions
+          {transactions.length > 0
+            ? 'Report Of The Transactions'
+            : 'All Of Your Report Of The Transactions Will Be Stored Here'}
         </h2>
         <p className="text-gray-600 mt-3 px-80">
-          Check the report by the chart of the transaction, which will be easier
-          to understand for your transaction monitor.
+          {transactions.length > 0
+            ? 'Check the report by the chart of the transaction, which will be easier to understand for your transaction monitor.'
+            : 'After adding the transaction, you can check the report by the chart of the transaction.'}
         </p>
       </div>
 
@@ -1031,7 +1034,7 @@ const Reports = () => {
               className="my-8 border-none text-white text-lg bg-linear-to-r from-violet-500 hover:from-violet-600 to-fuchsia-800 hover:scale-[1.10] duration-300 rounded-2xl py-2 px-5 flex items-center gap-2"
             >
               <IoIosArrowBack className="text-4xl" />
-              Add Transactions
+              Redirect the page to add the transactions
             </Link>
           </div>
         </>

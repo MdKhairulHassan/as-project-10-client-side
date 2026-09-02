@@ -1521,7 +1521,7 @@ const AllTransactions = () => {
               className="my-8 border-none text-white text-lg bg-linear-to-r from-violet-500 hover:from-violet-600 to-fuchsia-800 hover:scale-[1.10] duration-300 rounded-2xl py-2 px-5 flex items-center gap-2"
             >
               <IoIosArrowBack className="text-4xl" />
-              Add Transactions
+              Redirect the page to add the transactions
             </Link>
           </div>
         </>
