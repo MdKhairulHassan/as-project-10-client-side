@@ -1137,10 +1137,14 @@ const AllTransactions = () => {
     <div className="max-w-11/12 mx-auto py-15">
       <div className="text-center mb-12">
         <h2 className="text-4xl font-bold text-[#5c23be]">
-          All Of Your Transactions Are Here
+          {transactions.length > 0
+            ? 'All Of Your Transactions Are Here'
+            : 'All Of Your Transactions Will Be Stored Here'}
         </h2>
         <p className="text-gray-600 mt-3">
-          Check and update your transactions if necessary.
+          {transactions.length > 0
+            ? 'Check and update your transactions if necessary.'
+            : 'After adding the transaction, you can check and update your transactions if necessary.'}
         </p>
       </div>
 

@@ -1020,7 +1020,7 @@ const AddTransactions = () => {
   if (error === 'Bad Request') {
     return <BadRequest />;
   }
-  
+
   if (error === 'Not Found') {
     return <NotFound />;
   }
@@ -1195,7 +1195,7 @@ const AddTransactions = () => {
                       </span>
                     </label>
 
-                    <label className="input input-bordered flex items-center gap-3 rounded-xl bg-base-300 cursor-not-allowed">
+                    <label className="input input-bordered flex items-center gap-3 rounded-xl bg-base-100 cursor-not-allowed">
                       <User size={18} className="text-cyan-500" />
 
                       <input
@@ -1204,8 +1204,7 @@ const AddTransactions = () => {
                         defaultValue={user?.displayName}
                         // onChange={handleChange}
                         placeholder="Enter user name"
-                        className="grow cursor-not-allowed bg-base-300"
-                        readOnly
+                        className="grow bg-base-100"
                       />
                     </label>
                   </div>
