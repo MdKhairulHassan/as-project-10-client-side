@@ -73,9 +73,11 @@ const MyTransactions = ({
 
           <button
             onClick={() => handleDelete(transaction._id)}
-            className={`btn btn-xs btn-error ${isDeleting && 'bg-red-600'}`}
+            className={`btn btn-xs btn-error ${isDeleting && isDeleting === transaction._id ? 'bg-red-800' : ''}`}
           >
-            {isDeleting ? 'Deleting...' : 'Delete'}
+            {isDeleting && isDeleting === transaction._id
+              ? 'Deleting...'
+              : 'Delete'}
           </button>
         </div>
       </td>

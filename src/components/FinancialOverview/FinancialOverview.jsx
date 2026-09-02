@@ -104,6 +104,7 @@ import AxiosUseSecure from '../../provider/AxiosUseSecure';
 import AxiosUseAuthProvider from '../../provider/AxiosUseAuthProvider';
 import { useNavigate } from 'react-router';
 import BadRequest from '../BadRequest/BadRequest';
+import NotFound from '../NotFound/NotFound';
 
 const FinancialOverview = () => {
   // const { user } = use(AuthContext);
@@ -598,6 +599,14 @@ const FinancialOverview = () => {
             return 'forbidden';
           }
 
+          // 404
+          if (status === 404) {
+            setError('Not Found');
+            setLoading(false);
+
+            return 'notfound';
+          }
+
           // 500+
           if (status >= 500) {
             console.log(`Server error: ${status}`);
@@ -671,7 +680,8 @@ const FinancialOverview = () => {
       if (
         firstAttempt === 'unauthorized' ||
         firstAttempt === 'forbidden' ||
-        firstAttempt === 'badrequest'
+        firstAttempt === 'badrequest' ||
+        firstAttempt === 'notfound'
       ) {
         return;
       }
@@ -723,7 +733,8 @@ const FinancialOverview = () => {
         if (
           result === 'unauthorized' ||
           result === 'forbidden' ||
-          result === 'badrequest'
+          result === 'badrequest' ||
+          result === 'notfound'
         ) {
           return;
         }
@@ -797,6 +808,10 @@ const FinancialOverview = () => {
 
   if (error === 'Bad Request') {
     return <BadRequest />;
+  }
+
+  if (error === 'Not Found') {
+    return <NotFound />;
   }
 
   // ===============================================================================================

@@ -52,6 +52,7 @@ import ForbiddenAccess from '../../components/ForbiddenAccess/ForbiddenAccess';
 import AxiosUseSecure from '../../provider/AxiosUseSecure';
 import AxiosUseAuthProvider from '../../provider/AxiosUseAuthProvider';
 import BadRequest from '../../components/BadRequest/BadRequest';
+import NotFound from '../../components/NotFound/NotFound';
 
 // const MySwal = withReactContent(Swal);
 
@@ -73,7 +74,7 @@ const AllTransactions = () => {
   const [selectedTransaction, setSelectedTransaction] = useState(null);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(null);
 
   const detailsRef = useRef(null);
 
@@ -525,6 +526,14 @@ const AllTransactions = () => {
             return 'forbidden';
           }
 
+          // 404
+          if (status === 404) {
+            setError('Not Found');
+            setLoading(false);
+
+            return 'notfound';
+          }
+
           // 500+
           if (status >= 500) {
             console.log(`Server error: ${status}`);
@@ -598,7 +607,8 @@ const AllTransactions = () => {
       if (
         firstAttempt === 'unauthorized' ||
         firstAttempt === 'forbidden' ||
-        firstAttempt === 'badrequest'
+        firstAttempt === 'badrequest' ||
+        firstAttempt === 'notfound'
       ) {
         return;
       }
@@ -650,7 +660,8 @@ const AllTransactions = () => {
         if (
           result === 'unauthorized' ||
           result === 'forbidden' ||
-          result === 'badrequest'
+          result === 'badrequest' ||
+          result === 'notfound'
         ) {
           return;
         }
@@ -742,7 +753,7 @@ const AllTransactions = () => {
       date: form.date.value,
       type: form.type.value,
       description: form.description.value,
-      email: user?.email,
+      email: user.email,
     };
 
     // =============================================================================================
@@ -922,7 +933,7 @@ const AllTransactions = () => {
     }
 
     try {
-      setIsDeleting(true);
+      setIsDeleting(id);
 
       const response = await axiosSecure.delete(`/transactions/${id}`);
 
@@ -958,7 +969,7 @@ const AllTransactions = () => {
         confirmButtonColor: '#5c23be',
       });
     } finally {
-      setIsDeleting(false);
+      setIsDeleting(id);
     }
   };
 
@@ -1115,6 +1126,10 @@ const AllTransactions = () => {
   }
   if (error === 'Bad Request') {
     return <BadRequest />;
+  }
+
+  if (error === 'Not Found') {
+    return <NotFound />;
   }
 
   // ===============================================================================================

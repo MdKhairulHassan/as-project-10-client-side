@@ -69,6 +69,7 @@ import AxiosUseSecure from '../../provider/AxiosUseSecure';
 import Swal from 'sweetalert2';
 import { useNavigate } from 'react-router';
 import BadRequest from '../../components/BadRequest/BadRequest';
+import NotFound from '../../components/NotFound/NotFound';
 
 const AddTransactions = () => {
   // ======== Destructuring from object
@@ -836,6 +837,14 @@ const AddTransactions = () => {
             return 'forbidden';
           }
 
+          // 404
+          if (status === 404) {
+            setError('Not Found');
+            setLoading(false);
+
+            return 'notfound';
+          }
+
           // 500+
           if (status >= 500) {
             console.log(`Server error: ${status}`);
@@ -909,7 +918,8 @@ const AddTransactions = () => {
       if (
         firstAttempt === 'unauthorized' ||
         firstAttempt === 'forbidden' ||
-        firstAttempt === 'badrequest'
+        firstAttempt === 'badrequest' ||
+        firstAttempt === 'notfound'
       ) {
         return;
       }
@@ -961,7 +971,8 @@ const AddTransactions = () => {
         if (
           result === 'unauthorized' ||
           result === 'forbidden' ||
-          result === 'badrequest'
+          result === 'badrequest' ||
+          result === 'notfound'
         ) {
           return;
         }
@@ -1008,6 +1019,10 @@ const AddTransactions = () => {
 
   if (error === 'Bad Request') {
     return <BadRequest />;
+  }
+  
+  if (error === 'Not Found') {
+    return <NotFound />;
   }
 
   // ===============================================================================================

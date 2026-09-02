@@ -15,6 +15,7 @@ import CategoryChart from '../../components/CategoryChart/CategoryChart';
 import AxiosUseAuthProvider from '../../provider/AxiosUseAuthProvider';
 import AxiosUseSecure from '../../provider/AxiosUseSecure';
 import BadRequest from '../../components/BadRequest/BadRequest';
+import NotFound from '../../components/NotFound/NotFound';
 
 const Reports = () => {
   // const { user } = use(AuthContext);
@@ -455,6 +456,14 @@ const Reports = () => {
             return 'forbidden';
           }
 
+          // 404
+          if (status === 404) {
+            setError('Not Found');
+            setLoading(false);
+
+            return 'notfound';
+          }
+
           // 500+
           if (status >= 500) {
             console.log(`Server error: ${status}`);
@@ -528,7 +537,8 @@ const Reports = () => {
       if (
         firstAttempt === 'unauthorized' ||
         firstAttempt === 'forbidden' ||
-        firstAttempt === 'badrequest'
+        firstAttempt === 'badrequest' ||
+        firstAttempt === 'notfound'
       ) {
         return;
       }
@@ -580,7 +590,8 @@ const Reports = () => {
         if (
           result === 'unauthorized' ||
           result === 'forbidden' ||
-          result === 'badrequest'
+          result === 'badrequest' ||
+          result === 'notfound'
         ) {
           return;
         }
@@ -771,6 +782,10 @@ const Reports = () => {
 
   if (error === 'Bad Request') {
     return <BadRequest />;
+  }
+
+  if (error === 'Not Found') {
+    return <NotFound />;
   }
 
   // ===============================================================================================
