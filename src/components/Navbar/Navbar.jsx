@@ -4,7 +4,7 @@ import { NavLink } from 'react-router';
 import Logo from '../../assets/Logo.png';
 import { IoMdAddCircleOutline } from 'react-icons/io';
 import { RiHome4Line } from 'react-icons/ri';
-import { use } from 'react';
+// import { use } from 'react';
 // import { AuthContext } from '../../provider/AuthProvider';
 import {
   MdDarkMode,
@@ -15,13 +15,15 @@ import {
 } from 'react-icons/md';
 import { FaRegUserCircle } from 'react-icons/fa';
 import { toast } from 'react-toastify';
-import { AuthContext } from '../../provider/AuthContext';
-import { ThemeContext } from '../../provider/ThemeContext';
+// import { AuthContext } from '../../provider/AuthContext';
+// import { ThemeContext } from '../../provider/ThemeContext';
 // import { UserPen } from 'lucide-react';
+import AxiosUseAuthProvider from '../../provider/AxiosUseAuthProvider';
 
 const Navbar = () => {
-  const { user, logOut } = use(AuthContext);
-  const { theme, toggleTheme } = use(ThemeContext);
+  // const { user, logOut } = use(AuthContext);
+  // const { theme, toggleTheme } = use(ThemeContext);
+  const [{ user, logOut }, { theme, toggleTheme }] = AxiosUseAuthProvider();
 
   const handleLogOut = () => {
     console.log('user trying to logout');
@@ -134,11 +136,18 @@ const Navbar = () => {
           <MdLightMode
             className={`text-lg ${theme === 'light' ? 'text-yellow-500' : 'text-primary'}`}
           />
-          <input
+          {/* <input
             onClick={toggleTheme}
             type="checkbox"
             value="synthwave"
             className="toggle theme-controller bg-[#98ffdd] hover:bg-[#c09cff86]"
+          /> */}
+          <input
+            type="checkbox"
+            checked={theme === 'dark'}
+            onChange={toggleTheme}
+            className="toggle bg-[#98ffdd] hover:bg-[#c09cff86]"
+            aria-label="Toggle dark mode"
           />
           <MdDarkMode
             className={`text-lg ${theme === 'light' ? 'text-primary' : 'text-[#98ffdd]'}`}
