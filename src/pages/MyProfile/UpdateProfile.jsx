@@ -1,52 +1,19 @@
-import { use } from 'react';
+// import { use } from 'react';
 // import { AuthContext } from '../../provider/AuthProvider';
+// import { AuthContext } from '../../provider/AuthContext';
+// import { ThemeContext } from '../../provider/ThemeContext';
 import { User } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router';
-import { AuthContext } from '../../provider/AuthContext';
-import { ThemeContext } from '../../provider/ThemeContext';
+import AxiosUseAuthProvider from '../../provider/AxiosUseAuthProvider';
 // import { Mail, User } from 'lucide-react';
 
 const UpdateProfile = () => {
-  // const { user, setUser, updateUser, updateUserEmail } = use(AuthContext);
-  const { user, setUser, updateUser } = use(AuthContext);
-  const { theme } = use(ThemeContext);
+  // const { user, setUser, updateUser } = use(AuthContext);
+  // const { theme } = use(ThemeContext);
+  const [{ user, setUser, updateUser }, { theme }] = AxiosUseAuthProvider();
 
   const navigate = useNavigate();
-
-  const handleUpdateProfile = e => {
-    e.preventDefault();
-
-    const form = e.target;
-    const name = form.name.value;
-    const photo = form.photo.value;
-    // const email = form.email.value;
-
-    updateUser({
-      displayName: name,
-      photoURL: photo,
-    })
-      .then(() => {
-        setUser({
-          ...user,
-          displayName: name,
-          photoURL: photo,
-        });
-
-        form.reset();
-
-        toast.success('Profile update successfully', {
-          theme: 'colored',
-        });
-        navigate('/myprofile/profile');
-      })
-      .catch(error => {
-        toast.error(error, {
-          theme: 'colored',
-        });
-        setUser(user);
-      });
-  };
 
   // ===================================================== Need email varification to update or change the email.
   // const handleUpdateProfile = e => {
@@ -81,6 +48,78 @@ const UpdateProfile = () => {
   //       console.log(error);
   //     });
   // };
+
+  // ============================================================================================
+  // const handleUpdateProfile = e => {
+  //   e.preventDefault();
+
+  //   const form = e.target;
+  //   const name = form.name.value;
+  //   const photo = form.photo.value;
+  //   // const email = form.email.value;
+
+  //   updateUser({
+  //     displayName: name,
+  //     photoURL: photo,
+  //   })
+  //     .then(() => {
+  //       setUser({
+  //         ...user,
+  //         displayName: name,
+  //         photoURL: photo,
+  //       });
+
+  //       form.reset();
+
+  //       toast.success('Profile update successfully', {
+  //         theme: 'colored',
+  //       });
+  //       navigate('/myprofile/profile');
+  //     })
+  //     .catch(error => {
+  //       toast.error(error, {
+  //         theme: 'colored',
+  //       });
+  //       setUser(user);
+  //     });
+  // };
+
+  // ============================================================================================
+  const handleUpdateProfile = async e => {
+    e.preventDefault();
+
+    const form = e.currentTarget;
+    const name = form.name.value.trim();
+    const photo = form.photo.value.trim();
+
+    try {
+      await updateUser({
+        displayName: name,
+        photoURL: photo,
+      });
+
+      // Refreshes the real Firebase User object.
+      await user.reload();
+
+      // Do NOT use: setUser({ ...user, ... })
+      // Keep the actual Firebase User instance.
+      setUser(user);
+
+      form.reset();
+
+      toast.success('Profile updated successfully.', {
+        theme: theme,
+      });
+
+      navigate('/myprofile/profile');
+    } catch (error) {
+      console.error('Profile update failed:', error);
+
+      toast.error(error.message, {
+        theme: theme,
+      });
+    }
+  };
 
   return (
     <div

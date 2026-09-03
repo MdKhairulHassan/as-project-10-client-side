@@ -81,12 +81,12 @@ const AllTransactions = () => {
   const updateRef = useRef(null);
   console.log(transactions);
 
-  const now = new Date();
+  // const now = new Date();
 
-  const today =
-    `${now.getFullYear()}-` +
-    `${String(now.getMonth() + 1).padStart(2, '0')}-` +
-    `${String(now.getDate()).padStart(2, '0')}`; // for client side frontend local time zone
+  // const today =
+  //   `${now.getFullYear()}-` +
+  //   `${String(now.getMonth() + 1).padStart(2, '0')}-` +
+  //   `${String(now.getDate()).padStart(2, '0')}`; // for client side frontend local time zone
 
   const totalCategoryAmount = transactions
     .filter(
@@ -742,9 +742,9 @@ const AllTransactions = () => {
       return;
     }
 
-    const form = e.target;
+    // const form = e.target; // e.target IS the <form> element here, and perform better accurate target point.
 
-    // const form = e.currentTarget;
+    const form = e.currentTarget; // perform better for the icon-used button.
 
     const updatedData = {
       title: form.title.value,
@@ -1718,8 +1718,8 @@ const AllTransactions = () => {
                       name="date"
                       type="date"
                       // onChange={handleChange}
-                      // defaultValue={selectedTransaction?.date?.slice(0, 10)}
-                      defaultValue={today}
+                      defaultValue={selectedTransaction?.date?.slice(0, 10)}
+                      // defaultValue={today}
                       className="grow"
                     />
                   </label>

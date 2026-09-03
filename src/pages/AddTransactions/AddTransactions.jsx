@@ -207,7 +207,10 @@ const AddTransactions = () => {
   const handleAddTransaction = async e => {
     e.preventDefault();
 
-    const form = e.target; // e.target IS the <form> element here
+    // const form = e.target; // e.target IS the <form> element here, and perform better accurate target point.
+
+    const form = e.currentTarget; // perform better for the icon-used button.
+
     const title = form.title.value;
     const email = form.email.value;
     const amount = form.amount.value;
