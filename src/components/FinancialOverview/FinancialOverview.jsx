@@ -523,10 +523,13 @@ const FinancialOverview = () => {
 
     const fetchBalance = async () => {
       try {
-        // ========================================
-        const response = await axiosSecure.get(
-          `/transactions?email=${user.email}`,
-        );
+        // ========================================// Don't try to take email input from the client like this. It could create a vulnerability, allowing sophisticated hackers to determine whether your email exists in Firebase or in the database. Then they could try multiple times with this email to access the website database.
+        // const response = await axiosSecure.get(
+        //   `/transactions?email=${user.email}`,
+        // );
+
+        // ======================================== But this is the safest way after updating the server security.
+        const response = await axiosSecure.get(`/transactions`);
 
         // ========================================
         // header.Authorization is case-insensitive.
