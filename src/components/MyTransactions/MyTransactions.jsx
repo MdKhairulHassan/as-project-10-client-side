@@ -6,9 +6,20 @@ const MyTransactions = ({
   handleDelete,
   user,
   isDeleting,
+  handleSelectTransaction,
+  selected,
 }) => {
   return (
     <tr className="hover">
+      <td>
+        <input
+          type="checkbox"
+          className="checkbox checkbox-primary"
+          checked={selected}
+          onChange={() => handleSelectTransaction(transaction._id)}
+        />
+      </td>
+
       <th>{index + 1}</th>
 
       <td>

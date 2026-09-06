@@ -39,7 +39,7 @@
 // import { ThemeContext } from '../../provider/ThemeContext';
 // import { toast } from 'react-toastify';
 // import withReactContent from 'sweetalert2-react-content';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import MyTransactions from '../../components/MyTransactions/MyTransactions';
 import { CalendarDays, CircleX, FileText, Wallet } from 'lucide-react';
 import Swal from 'sweetalert2';
@@ -76,6 +76,18 @@ const AllTransactions = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(null);
 
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [isDeletingSelected, setIsDeletingSelected] = useState(false);
+
+  const [filters, setFilters] = useState({
+    category: '',
+    type: '',
+    minAmount: '',
+    maxAmount: '',
+    fromDate: '',
+    toDate: '',
+  });
+
   const detailsRef = useRef(null);
 
   const updateRef = useRef(null);
@@ -95,6 +107,53 @@ const AllTransactions = () => {
         transaction.type === selectedTransaction?.type,
     )
     .reduce((total, transaction) => total + Number(transaction.amount), 0);
+
+  // ===============================================================================================
+  const filteredTransactions = useMemo(() => {
+    return transactions.filter(transaction => {
+      // ================================
+      // Category
+      // ================================
+      if (filters.category && transaction.category !== filters.category) {
+        return false;
+      }
+
+      // ================================
+      // Type
+      // ================================
+      if (filters.type && transaction.type !== filters.type) {
+        return false;
+      }
+
+      // ================================
+      // Amount
+      // ================================
+      const amount = Number(transaction.amount);
+
+      if (filters.minAmount !== '' && amount < Number(filters.minAmount)) {
+        return false;
+      }
+
+      if (filters.maxAmount !== '' && amount > Number(filters.maxAmount)) {
+        return false;
+      }
+
+      // ================================
+      // Date
+      // ================================
+      const transactionDate = transaction.date?.slice(0, 10);
+
+      if (filters.fromDate && transactionDate < filters.fromDate) {
+        return false;
+      }
+
+      if (filters.toDate && transactionDate > filters.toDate) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [transactions, filters]);
 
   // ===============================================================================================
   // useEffect(() => {
@@ -699,6 +758,7 @@ const AllTransactions = () => {
     detailsRef.current.showModal();
   };
 
+  // ===============================================================================================
   const handleEdit = transaction => {
     setSelectedTransaction(transaction);
 
@@ -823,15 +883,27 @@ const AllTransactions = () => {
         ...updatedData,
       };
 
-      setTransactions(previous =>
-        previous.map(transaction =>
-          transaction._id === selectedTransaction._id
-            ? updatedTransaction
-            : transaction,
-        ),
-      );
+      // =============
+      // setTransactions(previous =>
+      //   previous.map(transaction =>
+      //     transaction._id === selectedTransaction._id
+      //       ? updatedTransaction
+      //       : transaction,
+      //   ),
+      // );
 
-      setSortedTransactions(previous =>
+      // setSortedTransactions(previous =>
+      //   previous.map(transaction =>
+      //     transaction._id === selectedTransaction._id
+      //       ? updatedTransaction
+      //       : transaction,
+      //   ),
+      // );
+
+      // setSelectedTransaction(updatedTransaction);
+
+      // =============
+      setTransactions(previous =>
         previous.map(transaction =>
           transaction._id === selectedTransaction._id
             ? updatedTransaction
@@ -841,6 +913,7 @@ const AllTransactions = () => {
 
       setSelectedTransaction(updatedTransaction);
 
+      // =============
       updateRef.current.close();
 
       await Swal.fire({
@@ -870,7 +943,7 @@ const AllTransactions = () => {
     }
   };
 
-  // =============================================================================================
+  // ===============================================================================================
   // const handleDelete = id => {
   //   Swal.fire({
   //     title: 'Are you sure?',
@@ -943,14 +1016,20 @@ const AllTransactions = () => {
         throw new Error('Transaction was not found.');
       }
 
+      // setTransactions(previous =>
+      //   previous.filter(transaction => transaction._id !== id),
+      // );
+
+      // setSortedTransactions(previous =>
+      //   previous.filter(transaction => transaction._id !== id),
+      // );
+
+      // ============
       setTransactions(previous =>
         previous.filter(transaction => transaction._id !== id),
       );
 
-      setSortedTransactions(previous =>
-        previous.filter(transaction => transaction._id !== id),
-      );
-
+      // ============
       Swal.fire({
         title: 'Deleted!',
         text: 'Your transaction has been deleted.',
@@ -975,13 +1054,18 @@ const AllTransactions = () => {
     }
   };
 
-  // =============================================================================================
+  // ===============================================================================================
   const handleSort = value => {
-    let sorted = [...transactions];
+    // let sorted = [...transactions];
+    let sorted = [...filteredTransactions];
 
     switch (value) {
+      // case 'default':
+      //   sorted = [...transactions];
+      //   setSortedText('default');
+      //   break;
       case 'default':
-        sorted = [...transactions];
+        sorted = [...filteredTransactions];
         setSortedText('default');
         break;
 
@@ -1102,13 +1186,205 @@ const AllTransactions = () => {
         sorted.sort((a, b) => new Date(a.date) - new Date(b.date));
         break;
 
+      // default:
+      //   setSortedText('default');
+      //   sorted = [...transactions];
       default:
         setSortedText('default');
-        sorted = [...transactions];
+        sorted = [...filteredTransactions];
     }
 
-    setSortedTransactions(sorted);
+    // setSortedTransactions(sorted);
+    setSortedText(value);
   };
+
+  // ===============================================================================================
+  useEffect(() => {
+    let result = [...filteredTransactions];
+
+    switch (sortedText) {
+      case 'amountHigh':
+        result.sort((a, b) => Number(b.amount) - Number(a.amount));
+        break;
+
+      case 'amountLow':
+        result.sort((a, b) => Number(a.amount) - Number(b.amount));
+        break;
+
+      case 'income':
+        result.sort((a, b) => {
+          if (a.type === b.type) return 0;
+          return a.type === 'Income' ? -1 : 1;
+        });
+        break;
+
+      case 'expense':
+        result.sort((a, b) => {
+          if (a.type === b.type) return 0;
+          return a.type === 'Expense' ? -1 : 1;
+        });
+        break;
+
+      case 'salary':
+      case 'freelance':
+      case 'business':
+      case 'transport':
+      case 'investment':
+      case 'bill':
+      case 'rent':
+      case 'food':
+      case 'buy':
+      case 'others':
+        result.sort((a, b) => {
+          if (a.category === b.category) return 0;
+          return a.category === sortedText ? -1 : 1;
+        });
+        break;
+
+      case 'newest':
+        result.sort((a, b) => new Date(b.date) - new Date(a.date));
+        break;
+
+      case 'oldest':
+        result.sort((a, b) => new Date(a.date) - new Date(b.date));
+        break;
+
+      default:
+        break;
+    }
+
+    setSortedTransactions(result);
+  }, [filteredTransactions, sortedText]);
+
+  // ==========
+  const handleFilterChange = (name, value) => {
+    setFilters(previous => ({
+      ...previous,
+      [name]: value,
+    }));
+  };
+
+  // ==========
+  const clearAllFilters = () => {
+    setFilters({
+      category: '',
+      type: '',
+      minAmount: '',
+      maxAmount: '',
+      fromDate: '',
+      toDate: '',
+    });
+  };
+
+  // ==========
+  const hasActiveFilters = Object.values(filters).some(value => value !== '');
+
+  // ===============================================================================================
+  const handleSelectTransaction = id => {
+    setSelectedIds(previous => {
+      if (previous.includes(id)) {
+        return previous.filter(transactionId => transactionId !== id);
+      }
+
+      return [...previous, id];
+    });
+  };
+
+  // ==========
+  const handleSelectAll = () => {
+    const visibleIds = sortedTransactions.map(transaction => transaction._id);
+
+    const allVisibleSelected = visibleIds.every(id => selectedIds.includes(id));
+
+    if (allVisibleSelected) {
+      setSelectedIds(previous =>
+        previous.filter(id => !visibleIds.includes(id)),
+      );
+    } else {
+      setSelectedIds(previous => [...new Set([...previous, ...visibleIds])]);
+    }
+  };
+
+  // ===============================================================================================
+  const allVisibleSelected =
+    sortedTransactions.length > 0 &&
+    sortedTransactions.every(transaction =>
+      selectedIds.includes(transaction._id),
+    );
+
+  // ===============================================================================================
+  const handleDeleteSelected = async () => {
+    if (selectedIds.length === 0) {
+      return;
+    }
+
+    const confirmation = await Swal.fire({
+      title: 'Delete selected transactions?',
+      text: `You are about to delete ${selectedIds.length} transaction${
+        selectedIds.length > 1 ? 's' : ''
+      }. This action cannot be undone.`,
+      icon: 'warning',
+      background: theme === 'dark' ? '#1D232A' : '#FFFFFF',
+      color: theme === 'dark' ? '#F8FAFC' : '#111827',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Yes, delete them!',
+    });
+
+    if (!confirmation.isConfirmed) {
+      return;
+    }
+
+    try {
+      setIsDeletingSelected(true);
+
+      await Promise.all(
+        selectedIds.map(id => axiosSecure.delete(`/transactions/${id}`)),
+      );
+
+      setTransactions(previous =>
+        previous.filter(transaction => !selectedIds.includes(transaction._id)),
+      );
+
+      setSortedTransactions(previous =>
+        previous.filter(transaction => !selectedIds.includes(transaction._id)),
+      );
+
+      setSelectedIds([]);
+
+      await Swal.fire({
+        title: 'Deleted!',
+        text: 'All selected transactions have been deleted.',
+        icon: 'success',
+        background: theme === 'dark' ? '#1D232A' : '#FFFFFF',
+        color: theme === 'dark' ? '#F8FAFC' : '#111827',
+        confirmButtonColor: '#5c23be',
+      });
+    } catch (error) {
+      console.error('Bulk delete failed:', error);
+
+      Swal.fire({
+        title: 'Failed to delete transactions',
+        text: getTransactionErrorMessage(error),
+        icon: 'error',
+        background: theme === 'dark' ? '#1D232A' : '#FFFFFF',
+        color: theme === 'dark' ? '#F8FAFC' : '#111827',
+        confirmButtonColor: '#5c23be',
+      });
+    } finally {
+      setIsDeletingSelected(false);
+    }
+  };
+
+  // ===============================================================================================
+  useEffect(() => {
+    const visibleIds = new Set(
+      sortedTransactions.map(transaction => transaction._id),
+    );
+
+    setSelectedIds(previous => previous.filter(id => visibleIds.has(id)));
+  }, [sortedTransactions]);
 
   // ===============================================================================================
   if (loading) {
@@ -1152,7 +1428,220 @@ const AllTransactions = () => {
 
       {transactions.length > 0 ? (
         <>
-          <div className="flex justify-end">
+          <div className="flex justify-end items-center gap-3 flex-wrap">
+            {/* ================================ BULK ACTIONS ================================= */}
+            {selectedIds.length > 0 && (
+              <button
+                type="button"
+                onClick={handleDeleteSelected}
+                disabled={isDeletingSelected}
+                className="btn border-none text-white rounded-xl bg-linear-to-r from-rose-500 to-red-600"
+              >
+                {isDeletingSelected
+                  ? 'Deleting...'
+                  : `Delete Selected (${selectedIds.length})`}
+              </button>
+            )}
+            {/* ================================ FILTER BUTTON ================================= */}
+            <div className="dropdown dropdown-end">
+              <label
+                tabIndex={0}
+                className={`btn ${
+                  hasActiveFilters ? 'bg-[#7835ec] text-white' : ''
+                }`}
+              >
+                Filter By
+              </label>
+
+              <ul
+                tabIndex={0}
+                className="dropdown-content menu bg-base-100 rounded-box w-72 shadow-xl p-3 z-50"
+              >
+                {/* Clear all */}
+                <li>
+                  <button
+                    type="button"
+                    onClick={clearAllFilters}
+                    className={
+                      !hasActiveFilters ? 'bg-[#7835ec] text-white' : ''
+                    }
+                  >
+                    Clear All Filters
+                  </button>
+                </li>
+
+                {/* Category */}
+                <li>
+                  <details>
+                    <summary
+                      className={
+                        filters.category ? 'bg-[#9963f7a8] text-white' : ''
+                      }
+                    >
+                      Category
+                    </summary>
+
+                    <ul>
+                      {[
+                        ['salary', 'Salary'],
+                        ['freelance', 'Freelance'],
+                        ['business', 'Business'],
+                        ['transport', 'Transport'],
+                        ['investment', 'Investment'],
+                        ['bill', 'Bill'],
+                        ['rent', 'Rent'],
+                        ['food', 'Food'],
+                        ['buy', 'Buy'],
+                        ['others', 'Others'],
+                      ].map(([value, label]) => (
+                        <li key={value}>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleFilterChange('category', value)
+                            }
+                            className={
+                              filters.category === value
+                                ? 'bg-[#7835ec] text-white'
+                                : ''
+                            }
+                          >
+                            {label}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </details>
+                </li>
+
+                {/* Type */}
+                <li>
+                  <details>
+                    <summary
+                      className={
+                        filters.type ? 'bg-[#9963f7a8] text-white' : ''
+                      }
+                    >
+                      Type
+                    </summary>
+
+                    <ul>
+                      <li>
+                        <button
+                          type="button"
+                          onClick={() => handleFilterChange('type', 'Income')}
+                          className={
+                            filters.type === 'Income'
+                              ? 'bg-[#7835ec] text-white'
+                              : ''
+                          }
+                        >
+                          Income
+                        </button>
+                      </li>
+
+                      <li>
+                        <button
+                          type="button"
+                          onClick={() => handleFilterChange('type', 'Expense')}
+                          className={
+                            filters.type === 'Expense'
+                              ? 'bg-[#7835ec] text-white'
+                              : ''
+                          }
+                        >
+                          Expense
+                        </button>
+                      </li>
+                    </ul>
+                  </details>
+                </li>
+
+                {/* Amount */}
+                <li>
+                  <details>
+                    <summary
+                      className={
+                        filters.minAmount !== '' || filters.maxAmount !== ''
+                          ? 'bg-[#9963f7a8] text-white'
+                          : ''
+                      }
+                    >
+                      Amount
+                    </summary>
+
+                    <div className="p-3 space-y-3">
+                      <input
+                        type="number"
+                        min="0"
+                        placeholder="Minimum amount"
+                        value={filters.minAmount}
+                        onChange={e =>
+                          handleFilterChange('minAmount', e.target.value)
+                        }
+                        className="input input-bordered w-full rounded-xl"
+                      />
+
+                      <input
+                        type="number"
+                        min="0"
+                        placeholder="Maximum amount"
+                        value={filters.maxAmount}
+                        onChange={e =>
+                          handleFilterChange('maxAmount', e.target.value)
+                        }
+                        className="input input-bordered w-full rounded-xl"
+                      />
+                    </div>
+                  </details>
+                </li>
+
+                {/* Date */}
+                <li>
+                  <details>
+                    <summary
+                      className={
+                        filters.fromDate || filters.toDate
+                          ? 'bg-[#9963f7a8] text-white'
+                          : ''
+                      }
+                    >
+                      Date
+                    </summary>
+
+                    <div className="p-3 space-y-3">
+                      <div>
+                        <label className="text-xs opacity-70">From</label>
+
+                        <input
+                          type="date"
+                          value={filters.fromDate}
+                          onChange={e =>
+                            handleFilterChange('fromDate', e.target.value)
+                          }
+                          className="input input-bordered w-full rounded-xl"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-xs opacity-70">To</label>
+
+                        <input
+                          type="date"
+                          value={filters.toDate}
+                          onChange={e =>
+                            handleFilterChange('toDate', e.target.value)
+                          }
+                          className="input input-bordered w-full rounded-xl"
+                        />
+                      </div>
+                    </div>
+                  </details>
+                </li>
+              </ul>
+            </div>
+
+            {/* ================================ MY EXISTING SORT BUTTON ================================= */}
             <div className="dropdown dropdown-end">
               <label
                 tabIndex={0}
@@ -1465,7 +1954,7 @@ const AllTransactions = () => {
           </div>
           <div className="overflow-x-auto border-y border-neutral-200 mb-16 mt-4">
             <table className="table table-zebra">
-              <thead>
+              {/* <thead>
                 <tr>
                   <th>#</th>
 
@@ -1479,6 +1968,29 @@ const AllTransactions = () => {
 
                   <th>Type</th>
 
+                  <th>Action</th>
+                </tr>
+              </thead> */}
+
+              {/* ================== */}
+              <thead>
+                <tr>
+                  <th>
+                    <input
+                      type="checkbox"
+                      className="checkbox checkbox-primary"
+                      checked={allVisibleSelected}
+                      onChange={handleSelectAll}
+                      disabled={sortedTransactions.length === 0}
+                    />
+                  </th>
+
+                  <th>#</th>
+                  <th>User</th>
+                  <th>Category</th>
+                  <th>Amount</th>
+                  <th>Date</th>
+                  <th>Type</th>
                   <th>Action</th>
                 </tr>
               </thead>
@@ -1496,6 +2008,18 @@ const AllTransactions = () => {
               />
             ))} */}
                 {sortedTransactions.map((transaction, index) => (
+                  // <MyTransactions
+                  //   key={transaction._id}
+                  //   transaction={transaction}
+                  //   index={index}
+                  //   user={user}
+                  //   handleView={handleView}
+                  //   handleEdit={handleEdit}
+                  //   handleDelete={handleDelete}
+                  //   isDeleting={isDeleting}
+                  // />
+
+                  // =========================
                   <MyTransactions
                     key={transaction._id}
                     transaction={transaction}
@@ -1505,6 +2029,8 @@ const AllTransactions = () => {
                     handleEdit={handleEdit}
                     handleDelete={handleDelete}
                     isDeleting={isDeleting}
+                    selected={selectedIds.includes(transaction._id)}
+                    handleSelectTransaction={handleSelectTransaction}
                   />
                 ))}
               </tbody>
