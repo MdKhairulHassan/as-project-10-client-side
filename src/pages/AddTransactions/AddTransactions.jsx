@@ -217,7 +217,7 @@ const AddTransactions = () => {
     const category = form.category.value;
     const type = form.type.value;
     const date = form.date.value;
-    // const date = new Date(form.date.value);
+    // const date = new Date(form.date.value); // don't do this it in client side. server side will manage it.
     const name = form.name.value;
     const description = form.description.value;
 
