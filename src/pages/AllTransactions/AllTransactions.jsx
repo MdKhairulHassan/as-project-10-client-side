@@ -1065,7 +1065,7 @@ const AllTransactions = () => {
       //   setSortedText('default');
       //   break;
       case 'default':
-        sorted = [...filteredTransactions];
+        sorted;
         setSortedText('default');
         break;
 
@@ -1191,7 +1191,7 @@ const AllTransactions = () => {
       //   sorted = [...transactions];
       default:
         setSortedText('default');
-        sorted = [...filteredTransactions];
+        sorted;
     }
 
     // setSortedTransactions(sorted);
@@ -1253,7 +1253,10 @@ const AllTransactions = () => {
         break;
     }
 
-    setSortedTransactions(result);
+    const setSortedT = () => {
+      setSortedTransactions(result);
+    };
+    setSortedT();
   }, [filteredTransactions, sortedText]);
 
   // ==========
@@ -1383,7 +1386,10 @@ const AllTransactions = () => {
       sortedTransactions.map(transaction => transaction._id),
     );
 
-    setSelectedIds(previous => previous.filter(id => visibleIds.has(id)));
+    const setSetected = () => {
+      setSelectedIds(previous => previous.filter(id => visibleIds.has(id)));
+    };
+    setSetected();
   }, [sortedTransactions]);
 
   // ===============================================================================================
@@ -1466,7 +1472,7 @@ const AllTransactions = () => {
                       !hasActiveFilters ? 'bg-[#7835ec] text-white' : ''
                     }
                   >
-                    Clear All Filters
+                    Default - Clear All Filters
                   </button>
                 </li>
 
@@ -1579,7 +1585,9 @@ const AllTransactions = () => {
                         onChange={e =>
                           handleFilterChange('minAmount', e.target.value)
                         }
-                        className="input input-bordered w-full rounded-xl"
+                        className={`input input-bordered w-full rounded-xl ${
+                          filters.minAmount > 0 ? 'bg-[#7835ec] text-white' : ''
+                        }`}
                       />
 
                       <input
@@ -1590,7 +1598,9 @@ const AllTransactions = () => {
                         onChange={e =>
                           handleFilterChange('maxAmount', e.target.value)
                         }
-                        className="input input-bordered w-full rounded-xl"
+                        className={`input input-bordered w-full rounded-xl ${
+                          filters.maxAmount > 0 ? 'bg-[#7835ec] text-white' : ''
+                        }`}
                       />
                     </div>
                   </details>
@@ -1619,7 +1629,9 @@ const AllTransactions = () => {
                           onChange={e =>
                             handleFilterChange('fromDate', e.target.value)
                           }
-                          className="input input-bordered w-full rounded-xl"
+                          className={`input input-bordered w-full rounded-xl ${
+                            filters.fromDate ? 'bg-[#7835ec] text-white' : ''
+                          }`}
                         />
                       </div>
 
@@ -1632,7 +1644,9 @@ const AllTransactions = () => {
                           onChange={e =>
                             handleFilterChange('toDate', e.target.value)
                           }
-                          className="input input-bordered w-full rounded-xl"
+                          className={`input input-bordered w-full rounded-xl ${
+                            filters.toDate ? 'bg-[#7835ec] text-white' : ''
+                          }`}
                         />
                       </div>
                     </div>
