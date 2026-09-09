@@ -1356,6 +1356,71 @@ const AllTransactions = () => {
     );
 
   // ===============================================================================================
+  // const handleDeleteSelected = async () => {
+  //   if (selectedIds.length === 0) {
+  //     return;
+  //   }
+
+  //   const confirmation = await Swal.fire({
+  //     title: 'Delete selected transactions?',
+  //     text: `You are about to delete ${selectedIds.length} transaction${
+  //       selectedIds.length > 1 ? 's' : ''
+  //     }. This action cannot be undone.`,
+  //     icon: 'warning',
+  //     background: theme === 'dark' ? '#1D232A' : '#FFFFFF',
+  //     color: theme === 'dark' ? '#F8FAFC' : '#111827',
+  //     showCancelButton: true,
+  //     confirmButtonColor: '#d33',
+  //     cancelButtonColor: '#3085d6',
+  //     confirmButtonText: 'Yes, delete them!',
+  //   });
+
+  //   if (!confirmation.isConfirmed) {
+  //     return;
+  //   }
+
+  //   try {
+  //     setIsDeletingSelected(true);
+
+  //     await Promise.all(
+  //       selectedIds.map(id => axiosSecure.delete(`/transactions/${id}`)),
+  //     );
+
+  //     setTransactions(previous =>
+  //       previous.filter(transaction => !selectedIds.includes(transaction._id)),
+  //     );
+
+  //     setSortedTransactions(previous =>
+  //       previous.filter(transaction => !selectedIds.includes(transaction._id)),
+  //     );
+
+  //     setSelectedIds([]);
+
+  //     await Swal.fire({
+  //       title: 'Deleted!',
+  //       text: 'All selected transactions have been deleted.',
+  //       icon: 'success',
+  //       background: theme === 'dark' ? '#1D232A' : '#FFFFFF',
+  //       color: theme === 'dark' ? '#F8FAFC' : '#111827',
+  //       confirmButtonColor: '#5c23be',
+  //     });
+  //   } catch (error) {
+  //     console.error('Bulk delete failed:', error);
+
+  //     Swal.fire({
+  //       title: 'Failed to delete transactions',
+  //       text: getTransactionErrorMessage(error),
+  //       icon: 'error',
+  //       background: theme === 'dark' ? '#1D232A' : '#FFFFFF',
+  //       color: theme === 'dark' ? '#F8FAFC' : '#111827',
+  //       confirmButtonColor: '#5c23be',
+  //     });
+  //   } finally {
+  //     setIsDeletingSelected(false);
+  //   }
+  // };
+
+  // ===============================================================================================
   const handleDeleteSelected = async () => {
     if (selectedIds.length === 0) {
       return;
@@ -1372,6 +1437,7 @@ const AllTransactions = () => {
       showCancelButton: true,
       confirmButtonColor: '#d33',
       cancelButtonColor: '#3085d6',
+      // reverseButtons: true,
       confirmButtonText: 'Yes, delete them!',
     });
 
@@ -1382,38 +1448,43 @@ const AllTransactions = () => {
     try {
       setIsDeletingSelected(true);
 
-      await Promise.all(
-        selectedIds.map(id => axiosSecure.delete(`/transactions/${id}`)),
-      );
-
-      setTransactions(previous =>
-        previous.filter(transaction => !selectedIds.includes(transaction._id)),
-      );
-
-      setSortedTransactions(previous =>
-        previous.filter(transaction => !selectedIds.includes(transaction._id)),
-      );
-
-      setSelectedIds([]);
-
-      await Swal.fire({
-        title: 'Deleted!',
-        text: 'All selected transactions have been deleted.',
-        icon: 'success',
-        background: theme === 'dark' ? '#1D232A' : '#FFFFFF',
-        color: theme === 'dark' ? '#F8FAFC' : '#111827',
-        confirmButtonColor: '#5c23be',
+      const response = await axiosSecure.delete('/transactions/bulk', {
+        data: {
+          ids: selectedIds,
+        },
       });
+
+      if (response.data.deletedCount > 0) {
+        setTransactions(previous =>
+          previous.filter(
+            transaction => !selectedIds.includes(transaction._id),
+          ),
+        );
+
+        // =========// No need this
+        // setSortedTransactions(previous =>
+        //   previous.filter(
+        //     transaction => !selectedIds.includes(transaction._id),
+        //   ),
+        // );
+
+        setSelectedIds([]);
+
+        Swal.fire({
+          icon: 'success',
+          title: 'Deleted!',
+          text: `${response.data.deletedCount} transaction(s) deleted successfully.`,
+        });
+      }
     } catch (error) {
-      console.error('Bulk delete failed:', error);
+      console.error('Bulk delete error:', error);
 
       Swal.fire({
-        title: 'Failed to delete transactions',
-        text: getTransactionErrorMessage(error),
         icon: 'error',
-        background: theme === 'dark' ? '#1D232A' : '#FFFFFF',
-        color: theme === 'dark' ? '#F8FAFC' : '#111827',
-        confirmButtonColor: '#5c23be',
+        title: 'Delete Failed',
+        text:
+          error.response?.data?.message ||
+          'Something went wrong while deleting transactions.',
       });
     } finally {
       setIsDeletingSelected(false);
@@ -1489,6 +1560,7 @@ const AllTransactions = () => {
                   : `Delete Selected (${selectedIds.length})`}
               </button>
             )}
+
             {/* ================================ FILTER BUTTON ================================= */}
             <div className="dropdown dropdown-end">
               <label
