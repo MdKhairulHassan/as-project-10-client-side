@@ -109,6 +109,25 @@ const AllTransactions = () => {
     .reduce((total, transaction) => total + Number(transaction.amount), 0);
 
   // ===============================================================================================
+  // ========== // leap year february date validation and date formate check
+  const isValidDateString = value => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      return false;
+    }
+
+    const [year, month, day] = value.split('-').map(Number);
+
+    const date = new Date(Date.UTC(year, month - 1, day));
+
+    return (
+      date.getUTCFullYear() === year &&
+      date.getUTCMonth() === month - 1 &&
+      date.getUTCDate() === day
+    );
+  };
+
+  // ===============================================================================================
+  // ========== // useMemo saves data temporarily in the cache memory. That's why calculation performance increases, and re-renders are triggered by dependencies like useEffect. But it doesn't re-render every time like useEffect. It only re-renders when dependencies change.
   const filteredTransactions = useMemo(() => {
     return transactions.filter(transaction => {
       // ================================
@@ -143,11 +162,19 @@ const AllTransactions = () => {
       // ================================
       const transactionDate = transaction.date?.slice(0, 10);
 
-      if (filters.fromDate && transactionDate < filters.fromDate) {
+      if (
+        filters.fromDate &&
+        isValidDateString(filters.fromDate) &&
+        transactionDate < filters.fromDate
+      ) {
         return false;
       }
 
-      if (filters.toDate && transactionDate > filters.toDate) {
+      if (
+        filters.toDate &&
+        isValidDateString(filters.toDate) &&
+        transactionDate > filters.toDate
+      ) {
         return false;
       }
 
@@ -998,8 +1025,8 @@ const AllTransactions = () => {
       background: theme === 'dark' ? '#1D232A' : '#FFFFFF',
       color: theme === 'dark' ? '#F8FAFC' : '#111827',
       showCancelButton: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
       confirmButtonText: 'Yes, delete it!',
     });
 
@@ -1199,6 +1226,7 @@ const AllTransactions = () => {
   };
 
   // ===============================================================================================
+  // ========== // Using the same useState in two different functions. But for useMemo, it's not creating any bug. It works more efficiently after using useMemo. Here, the sortedText is a useState array element, which is a value, and it is updated by setSortedText.
   useEffect(() => {
     let result = [...filteredTransactions];
 
@@ -1259,7 +1287,7 @@ const AllTransactions = () => {
     setSortedT();
   }, [filteredTransactions, sortedText]);
 
-  // ==========
+  // ========== // Especially work for set filter with a category also.
   const handleFilterChange = (name, value) => {
     setFilters(previous => ({
       ...previous,
@@ -1267,7 +1295,7 @@ const AllTransactions = () => {
     }));
   };
 
-  // ==========
+  // ========== // Default: clear all filters, and the user can see data normally.
   const clearAllFilters = () => {
     setFilters({
       category: '',
@@ -1279,7 +1307,12 @@ const AllTransactions = () => {
     });
   };
 
-  // ==========
+  // ========== // Object.values() means: make an object into an array of its property values.
+  // ========== // check minimum active one fliter like empty or not: 'something' !== ''
+  // ========== // This variable is basically answering one simple question:
+  // ========== // "Does the user currently have at least one filter applied?"
+  // ========== // Don't confuse .some() with .map(). ".map() means:'Transform every item and give me a new array.';"
+  // ========== // Whereas: .some() means: 'Does at least one item satisfy this condition?';
   const hasActiveFilters = Object.values(filters).some(value => value !== '');
 
   // ===============================================================================================
@@ -1297,18 +1330,25 @@ const AllTransactions = () => {
   const handleSelectAll = () => {
     const visibleIds = sortedTransactions.map(transaction => transaction._id);
 
+    // ========== // .every() is work like .some() but need all positive value.
+    // ========== // "Are ALL true?"
     const allVisibleSelected = visibleIds.every(id => selectedIds.includes(id));
 
+    // ========== // If all are selected. That means unselected all.
     if (allVisibleSelected) {
       setSelectedIds(previous =>
+        // Filter rules- only keep true. And leave the false ones.
         previous.filter(id => !visibleIds.includes(id)),
       );
     } else {
+      // ========== // If all are unselected. That means selected all.
+      // A Set is a JavaScript collection where the same value is not kept as a duplicate. That's why it first makes it a single then keeps it. But remember, a new set is not an array it's an object without duplicate value. So that makes it an array with [...]. Naturally a JavaScript object cannot contain duplicate property keys.
       setSelectedIds(previous => [...new Set([...previous, ...visibleIds])]);
     }
   };
 
-  // ===============================================================================================
+  // ========== // If all is not selected then make it false. It will be remove the check mark from the all selected button.
+  // ========== // All selected id need to be stay in the visible transaction element. Which is already included in the sortedTransactions for visibility.
   const allVisibleSelected =
     sortedTransactions.length > 0 &&
     sortedTransactions.every(transaction =>
@@ -1381,6 +1421,7 @@ const AllTransactions = () => {
   };
 
   // ===============================================================================================
+  // ========== // Remove the selected mark, which is not displayed. Every filter will update the sortedTransactions. That means visible displayed transactions will be updated by sortedTransactions dependencies.
   useEffect(() => {
     const visibleIds = new Set(
       sortedTransactions.map(transaction => transaction._id),
@@ -1504,7 +1545,10 @@ const AllTransactions = () => {
                           <button
                             type="button"
                             onClick={() =>
-                              handleFilterChange('category', value)
+                              handleFilterChange(
+                                'category',
+                                filters.category === value ? '' : value,
+                              )
                             }
                             className={
                               filters.category === value
@@ -1535,7 +1579,12 @@ const AllTransactions = () => {
                       <li>
                         <button
                           type="button"
-                          onClick={() => handleFilterChange('type', 'Income')}
+                          onClick={() =>
+                            handleFilterChange(
+                              'type',
+                              filters.type === 'Income' ? '' : 'Income',
+                            )
+                          }
                           className={
                             filters.type === 'Income'
                               ? 'bg-[#7835ec] text-white'
@@ -1549,7 +1598,12 @@ const AllTransactions = () => {
                       <li>
                         <button
                           type="button"
-                          onClick={() => handleFilterChange('type', 'Expense')}
+                          onClick={() =>
+                            handleFilterChange(
+                              'type',
+                              filters.type === 'Expense' ? '' : 'Expense',
+                            )
+                          }
                           className={
                             filters.type === 'Expense'
                               ? 'bg-[#7835ec] text-white'
@@ -1586,7 +1640,7 @@ const AllTransactions = () => {
                           handleFilterChange('minAmount', e.target.value)
                         }
                         className={`input input-bordered w-full rounded-xl ${
-                          filters.minAmount > 0 ? 'bg-[#7835ec] text-white' : ''
+                          filters.minAmount ? 'bg-[#7835ec] text-white' : ''
                         }`}
                       />
 
@@ -1599,7 +1653,7 @@ const AllTransactions = () => {
                           handleFilterChange('maxAmount', e.target.value)
                         }
                         className={`input input-bordered w-full rounded-xl ${
-                          filters.maxAmount > 0 ? 'bg-[#7835ec] text-white' : ''
+                          filters.maxAmount ? 'bg-[#7835ec] text-white' : ''
                         }`}
                       />
                     </div>
@@ -1626,9 +1680,13 @@ const AllTransactions = () => {
                         <input
                           type="date"
                           value={filters.fromDate}
-                          onChange={e =>
-                            handleFilterChange('fromDate', e.target.value)
-                          }
+                          onChange={e => {
+                            const value = e.target.value;
+
+                            if (value === '' || isValidDateString(value)) {
+                              handleFilterChange('fromDate', value);
+                            }
+                          }}
                           className={`input input-bordered w-full rounded-xl ${
                             filters.fromDate ? 'bg-[#7835ec] text-white' : ''
                           }`}
@@ -1641,9 +1699,13 @@ const AllTransactions = () => {
                         <input
                           type="date"
                           value={filters.toDate}
-                          onChange={e =>
-                            handleFilterChange('toDate', e.target.value)
-                          }
+                          onChange={e => {
+                            const value = e.target.value;
+
+                            if (value === '' || isValidDateString(value)) {
+                              handleFilterChange('toDate', value);
+                            }
+                          }}
                           className={`input input-bordered w-full rounded-xl ${
                             filters.toDate ? 'bg-[#7835ec] text-white' : ''
                           }`}
@@ -2043,6 +2105,7 @@ const AllTransactions = () => {
                     handleEdit={handleEdit}
                     handleDelete={handleDelete}
                     isDeleting={isDeleting}
+                    isDeletingSelected={isDeletingSelected}
                     selected={selectedIds.includes(transaction._id)}
                     handleSelectTransaction={handleSelectTransaction}
                   />

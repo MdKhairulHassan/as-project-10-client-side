@@ -8,6 +8,7 @@ const MyTransactions = ({
   isDeleting,
   handleSelectTransaction,
   selected,
+  isDeletingSelected,
 }) => {
   return (
     <tr className="hover">
@@ -84,9 +85,10 @@ const MyTransactions = ({
 
           <button
             onClick={() => handleDelete(transaction._id)}
-            className={`btn btn-xs btn-error ${isDeleting && isDeleting === transaction._id ? 'bg-red-800' : ''}`}
+            className={`btn btn-xs btn-error ${isDeleting && isDeleting === transaction._id ? 'bg-red-800' : ''} ${isDeletingSelected && selected ? 'bg-red-800' : ''}`}
           >
-            {isDeleting && isDeleting === transaction._id
+            {(isDeleting && isDeleting === transaction._id) ||
+            (isDeletingSelected && selected)
               ? 'Deleting...'
               : 'Delete'}
           </button>
