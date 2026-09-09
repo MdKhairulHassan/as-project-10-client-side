@@ -127,7 +127,7 @@ const AllTransactions = () => {
   };
 
   // ===============================================================================================
-  // ========== // useMemo saves data temporarily in the cache memory. That's why calculation performance increases, and re-renders are triggered by dependencies like useEffect. But it doesn't re-render every time like useEffect. It only re-renders when dependencies change.
+  // ========== // useMemo saves data temporarily in the cache memory. That's why calculation performance increases, and re-renders are triggered by dependencies like useEffect. But don't use it like useEffect everywhere. It could create a bug due to unnecessary use.
   const filteredTransactions = useMemo(() => {
     return transactions.filter(transaction => {
       // ================================
@@ -1565,7 +1565,7 @@ const AllTransactions = () => {
             <div className="dropdown dropdown-end">
               <label
                 tabIndex={0}
-                className={`btn ${
+                className={`btn bg-base-300 ${
                   hasActiveFilters ? 'bg-[#7835ec] text-white' : ''
                 }`}
               >
@@ -1793,7 +1793,7 @@ const AllTransactions = () => {
             <div className="dropdown dropdown-end">
               <label
                 tabIndex={0}
-                className={`btn ${
+                className={`btn bg-base-300 ${
                   sortedText !== 'default' ? 'bg-[#7835ec] text-white' : ''
                 }`}
               >
@@ -2121,68 +2121,57 @@ const AllTransactions = () => {
               </thead> */}
 
               {/* ================== */}
-              <thead>
-                <tr>
-                  <th>
-                    <input
-                      type="checkbox"
-                      className="checkbox checkbox-primary"
-                      checked={allVisibleSelected}
-                      onChange={handleSelectAll}
-                      disabled={sortedTransactions.length === 0}
-                    />
-                  </th>
 
-                  <th>#</th>
-                  <th>User</th>
-                  <th>Category</th>
-                  <th>Amount</th>
-                  <th>Date</th>
-                  <th>Type</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
+              {sortedTransactions.length === 0 ? (
+                <>
+                  <p className="py-20 px-40 text-xl text-gray-400 text-center">
+                    No transaction data is found here by this filter. Please
+                    change the filter indicator or add a transaction to this
+                    same filter range.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <thead>
+                    <tr>
+                      <th>
+                        <input
+                          type="checkbox"
+                          className="checkbox checkbox-primary"
+                          checked={allVisibleSelected}
+                          onChange={handleSelectAll}
+                          disabled={sortedTransactions.length === 0}
+                        />
+                      </th>
 
-              <tbody>
-                {/* {transactions.map((transaction, index) => (
-              <MyTransactions
-                key={transaction._id}
-                transaction={transaction}
-                index={index}
-                user={user}
-                handleView={handleView}
-                handleEdit={handleEdit}
-                handleDelete={handleDelete}
-              />
-            ))} */}
-                {sortedTransactions.map((transaction, index) => (
-                  // <MyTransactions
-                  //   key={transaction._id}
-                  //   transaction={transaction}
-                  //   index={index}
-                  //   user={user}
-                  //   handleView={handleView}
-                  //   handleEdit={handleEdit}
-                  //   handleDelete={handleDelete}
-                  //   isDeleting={isDeleting}
-                  // />
-
-                  // =========================
-                  <MyTransactions
-                    key={transaction._id}
-                    transaction={transaction}
-                    index={index}
-                    user={user}
-                    handleView={handleView}
-                    handleEdit={handleEdit}
-                    handleDelete={handleDelete}
-                    isDeleting={isDeleting}
-                    isDeletingSelected={isDeletingSelected}
-                    selected={selectedIds.includes(transaction._id)}
-                    handleSelectTransaction={handleSelectTransaction}
-                  />
-                ))}
-              </tbody>
+                      <th>#</th>
+                      <th>User</th>
+                      <th>Category</th>
+                      <th>Amount</th>
+                      <th>Date</th>
+                      <th>Type</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sortedTransactions.map((transaction, index) => (
+                      <MyTransactions
+                        key={transaction._id}
+                        transaction={transaction}
+                        index={index}
+                        user={user}
+                        handleView={handleView}
+                        handleEdit={handleEdit}
+                        handleDelete={handleDelete}
+                        isDeleting={isDeleting}
+                        isDeletingSelected={isDeletingSelected}
+                        selected={selectedIds.includes(transaction._id)}
+                        handleSelectTransaction={handleSelectTransaction}
+                      />
+                    ))}
+                  </tbody>
+                </>
+              )}
             </table>
           </div>
         </>

@@ -991,23 +991,24 @@ const Reports = () => {
           ) : (
             <>
               <p className="py-10 text-xl text-gray-400 text-center">
-                You did not add any transactions in that month and year. Please
-                add at least one transaction in that month and year to check the
+                You did not add any transactions in this month and year. Please
+                add at least one transaction in this month and year to check the
                 report in the chart. Then you can filter the chart for this
-                month and year again.
+                month and year again. Or you can filter now those months that
+                already contain your created transactions.
                 <br />
                 <br />
                 <span className="text-sm">
                   Click the button below for your choice
                 </span>
               </p>
-              <div className="flex justify-center gap-x-5">
+              <div className="flex justify-center gap-x-2">
                 <Link
                   to={'/addTransactions'}
-                  className="border-none text-white text-lg bg-linear-to-r from-violet-500 hover:from-violet-600 to-fuchsia-800 hover:scale-[1.10] duration-300 rounded-2xl py-2 px-5 flex items-center gap-2"
+                  className="border-none text-white text-lg bg-linear-to-r from-violet-500 hover:from-violet-900 to-fuchsia-800 hover:scale-[1.10] duration-300 rounded-2xl py-2 px-5 flex items-center gap-2 hover:bg-linear-to-r hover:to-fuchsia-900"
                 >
                   <IoIosArrowBack className="text-4xl" />
-                  Add Transactions
+                  Redirect the page to add the transactions
                 </Link>
                 <button
                   type="button"
