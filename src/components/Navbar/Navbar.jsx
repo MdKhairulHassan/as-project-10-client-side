@@ -2,7 +2,7 @@ import { BsBarChartLineFill } from 'react-icons/bs';
 import { ImProfile } from 'react-icons/im';
 import { NavLink } from 'react-router';
 import Logo from '../../assets/Logo.png';
-import { IoMdAddCircleOutline } from 'react-icons/io';
+import { IoMdAddCircleOutline, IoMdMenu } from 'react-icons/io';
 import { RiHome4Line } from 'react-icons/ri';
 // import { use } from 'react';
 // import { AuthContext } from '../../provider/AuthProvider';
@@ -132,7 +132,7 @@ const Navbar = () => {
           </span>
         </button> */}
 
-        <label className="flex cursor-pointer gap-2 ml-10 hover:bg-[#c09cff86]">
+        <label className="flex cursor-pointer gap-2 ml-10 hover:bg-[#c09cff86] sm:ml-0 sm:justify-center max-sm:ml-0 max-sm:justify-center">
           <MdLightMode
             className={`text-lg ${theme === 'light' ? 'text-yellow-500' : 'text-primary'}`}
           />
@@ -173,26 +173,13 @@ const Navbar = () => {
               htmlFor="navbar-1-toggle"
               className="btn btn-ghost lg:hidden"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M4 6h16M4 12h8m-8 6h16"
-                />
-              </svg>
+              <IoMdMenu className="text-[#3B1E6D] sm:text-4xl max-sm:text-2xl" />
             </label>
             <NavLink
               to={'/'}
               className="btn btn-ghost text-xl hover:bg-[#c09cff86] px-3 py-8 rounded-2xl"
             >
-              <img src={Logo} alt="Logo" className="w-18" />
+              <img src={Logo} alt="Logo" className="w-18 sm:w-14 max-sm:w-10" />
               <div className="flex">
                 <span className="text-[#3B1E6D]">Fin</span>
                 <span className="text-[#10B981]">Ease</span>
@@ -247,8 +234,8 @@ const Navbar = () => {
           </div>
         </div>
 
-        <div className="collapse-content lg:hidden z-1">
-          <ul className="menu">{links}</ul>
+        <div className="collapse-content lg:hidden z-1 md:flex sm:flex sm:justify-center">
+          <ul className="menu sm:gap-y-5 sm:w-full max-sm:w-full">{links}</ul>
         </div>
       </div>
     </div>
