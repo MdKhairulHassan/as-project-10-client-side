@@ -28,7 +28,7 @@ const FinancialPlanning = () => {
       id="planning"
       className={`py-20 mt-30 mb-10 rounded-2xl ${theme === 'dark' ? 'bg-base-100' : 'bg-linear-to-br from-sky-200 via-indigo-50 to-violet-200'}`}
     >
-      <div className="max-w-7xl mx-auto px-6 grid md:grid-cols-2 gap-12 items-center">
+      <div className="max-w-7xl mx-auto px-6 max-sm:px-3 grid max-sm:grid-cols-1 sm:grid-cols-1 md:grid-cols-1 lg:grid-cols-2 grid-cols-2 gap-12 items-center">
         {/* LEFT CONTENT */}
         <div>
           <h2 className="text-4xl font-bold text-[#5c23be] mb-4">
@@ -41,7 +41,7 @@ const FinancialPlanning = () => {
             confidence.
           </p>
 
-          <div className="grid grid-cols-2 gap-5">
+          <div className="grid grid-cols-2 gap-5 max-sm:grid-cols-1">
             {/* Item 1 */}
             <div
               className={`${theme === 'dark' ? 'bg-base-300' : 'bg-white'} p-5 rounded-2xl shadow hover:shadow-lg transition`}

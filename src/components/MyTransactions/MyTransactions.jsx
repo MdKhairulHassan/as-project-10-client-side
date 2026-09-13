@@ -45,17 +45,19 @@ const MyTransactions = ({
         </span>
       </td>
 
-      <td>
+      <td className="min-w-30">
         <span
           className={`font-bold ${
             transaction.type === 'Income' ? 'text-green-600' : 'text-red-500'
           }`}
         >
-          ৳ {transaction.amount}
+          $ {transaction.amount}
         </span>
       </td>
 
-      <td>{new Date(transaction.date).toISOString().split('T')[0]}</td>
+      <td className="min-w-30">
+        {new Date(transaction.date).toISOString().split('T')[0]}
+      </td>
 
       <td>
         <span

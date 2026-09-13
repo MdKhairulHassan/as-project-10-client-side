@@ -177,10 +177,10 @@ const Navbar = () => {
             </label>
             <NavLink
               to={'/'}
-              className="btn btn-ghost text-xl hover:bg-[#c09cff86] px-3 py-8 rounded-2xl"
+              className="btn btn-ghost text-xl hover:bg-[#c09cff86] px-3 py-8 max-sm:px-0 rounded-2xl max-sm:-ml-4.5"
             >
-              <img src={Logo} alt="Logo" className="w-18 sm:w-14 max-sm:w-10" />
-              <div className="flex">
+              <img src={Logo} alt="Logo" className="w-18 sm:w-14 max-sm:w-12" />
+              <div className="flex max-sm:text-lg max-sm:-ml-2">
                 <span className="text-[#3B1E6D]">Fin</span>
                 <span className="text-[#10B981]">Ease</span>
               </div>
@@ -189,7 +189,7 @@ const Navbar = () => {
           <div className="navbar-center hidden lg:flex">
             <ul className="menu menu-horizontal items-center px-1">{links}</ul>
           </div>
-          <div className="navbar-end gap-x-5">
+          <div className="navbar-end gap-x-5 max-sm:gap-x-0">
             <NavLink
               to={'/myprofile/profile'}
               className={
@@ -200,7 +200,7 @@ const Navbar = () => {
                 <img
                   src={user.photoURL}
                   alt="photo"
-                  className="w-14 h-14 rounded-full"
+                  className="w-14 h-14 rounded-full max-sm:w-9 max-sm:h-9"
                 />
               ) : (
                 <FaRegUserCircle className="text-4xl text-primary" />

@@ -132,44 +132,68 @@ const CategoryChart = ({
   };
 
   return (
-    <div className="w-full h-90 mt-3 mb-45">
+    <div className="w-full mt-3 mb-10">
       <p className="text-[#5c23be] text-lg font-bold pb-5">
         Report By Transaction Category Chart:
       </p>
-      <BarChart
-        style={{
-          width: '100%',
-          maxHeight: '80vh',
-          aspectRatio: 1.618,
-        }}
-        responsive
-        data={data}
-        margin={{
-          top: 5,
-          right: 0,
-          left: 0,
-          bottom: 5,
-        }}
-      >
-        <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="name" />
-        <YAxis width="auto" />
-        <Tooltip content={CustomTooltip} />
-        <Legend />
-        <Bar
-          dataKey="income"
-          fill="#82ca9d"
-          activeBar={{ fill: 'green', stroke: 'green' }}
-          radius={[10, 10, 0, 0]}
-        />
-        <Bar
-          dataKey="expense"
-          fill="#dc5454ec"
-          activeBar={{ fill: 'red', stroke: 'red' }}
-          radius={[10, 10, 0, 0]}
-        />
-        {/* <RechartsDevtools /> */}
-      </BarChart>
+      <div className="w-full h-87.5 sm:h-100 lg:h-112.5">
+        <BarChart
+          style={{
+            width: '100%',
+            height: '100%',
+          }}
+          responsive
+          data={data}
+          margin={{
+            top: 10,
+            right: 10,
+            left: 5,
+            bottom: 20,
+          }}
+        >
+          <CartesianGrid strokeDasharray="3 3" />
+
+          <XAxis
+            dataKey="name"
+            tick={{ fontSize: 12 }}
+            interval={0}
+            angle={-30}
+            textAnchor="end"
+            height={60}
+          />
+
+          <YAxis
+            width="auto"
+            tickFormatter={value => `$${value}`}
+            label={{
+              value: 'Amount ($)',
+              angle: -90,
+              position: 'left',
+              offset: -5,
+            }}
+          />
+
+          <Tooltip content={CustomTooltip} />
+
+          <Legend />
+
+          <Bar
+            dataKey="income"
+            fill="#82ca9d"
+            activeBar={{ fill: 'green', stroke: 'green' }}
+            radius={[10, 10, 0, 0]}
+          />
+
+          <Bar
+            dataKey="expense"
+            fill="#dc5454ec"
+            activeBar={{ fill: 'red', stroke: 'red' }}
+            radius={[10, 10, 0, 0]}
+          />
+          {/* <RechartsDevtools /> */}
+          {/* leave RechartsDevtools out unless you're actually debugging a difficult Recharts-specific problem. */}
+        </BarChart>
+      </div>
     </div>
   );
 };

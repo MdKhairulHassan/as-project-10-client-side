@@ -1565,7 +1565,7 @@ const AllTransactions = () => {
             <div className="dropdown dropdown-end">
               <label
                 tabIndex={0}
-                className={`btn bg-base-300 ${
+                className={`btn ${
                   hasActiveFilters ? 'bg-[#7835ec] text-white' : ''
                 }`}
               >
@@ -1793,7 +1793,7 @@ const AllTransactions = () => {
             <div className="dropdown dropdown-end">
               <label
                 tabIndex={0}
-                className={`btn bg-base-300 ${
+                className={`btn ${
                   sortedText !== 'default' ? 'bg-[#7835ec] text-white' : ''
                 }`}
               >
@@ -2338,7 +2338,7 @@ const AllTransactions = () => {
               </div>
 
               {/* Amount */}
-              <div className="grid grid-cols-2 gap-4 mb-4">
+              <div className="grid grid-cols-2 gap-4 mb-4 max-sm:grid-cols-1">
                 <div className="bg-base-200 rounded-2xl p-4">
                   <label className="font-semibold mb-2 block">Amount</label>
 

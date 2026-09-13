@@ -99,7 +99,7 @@ const Footer = () => {
             to={'/'}
             className="btn btn-ghost text-xl hover:bg-[#c09cff86] pt-8 pb-7 pr-13 pl-7 rounded-2xl w-40"
           >
-            <img src={Logo} alt="Logo" className="w-18" />
+            <img src={Logo} alt="Logo" className="w-18 max-sm:w-12 sm:w-14" />
             <div className="flex">
               <span className="text-[#3B1E6D]">Fin</span>
               <span className="text-[#10B981]">Ease</span>

@@ -1046,7 +1046,7 @@ const AddTransactions = () => {
       <button
         onClick={handleTransactionModalOpen}
         type="submit"
-        className="w-2/12 my-8 border-none text-white text-lg hover:scale-[1.10] duration-300 rounded-2xl py-2 px-3 bg-linear-to-r from-violet-500 hover:from-violet-400 to-fuchsia-400"
+        className="w-2/12 my-8 border-none text-white text-lg hover:scale-[1.10] duration-300 rounded-2xl py-2 px-3 bg-linear-to-r from-violet-500 hover:from-violet-400 to-fuchsia-400 lg:w-3/12 md:w-4/12 sm:w-5/12 max-sm:w-10/12"
       >
         Add Transactions
       </button>
@@ -1298,7 +1298,7 @@ const AddTransactions = () => {
         /* Get Transactions */
         <div className="w-full overflow-hidden rounded-3xl border border-base-300 bg-base-100 shadow-xl mb-20">
           {/* Scroll Container */}
-          <div className="overflow-x-auto overflow-y-auto max-h-screen">
+          <div className="overflow-x-auto overflow-y-auto max-h-[70vh]">
             <table className="table table-zebra min-w-225">
               {/* head */}
               <thead className="bg-base-200 text-base-content sticky top-0 z-10">
@@ -1321,7 +1321,7 @@ const AddTransactions = () => {
 
                     {/* User Info */}
                     <td>
-                      <div className="flex items-center gap-4 min-w-63">
+                      <div className="flex items-center gap-4 min-w-65">
                         <div className="avatar">
                           <div className="w-14 rounded-2xl ring ring-violet-300 ring-offset-base-100 ring-offset-2">
                             <img src={user?.photoURL} alt="user-photo" />
@@ -1348,7 +1348,7 @@ const AddTransactions = () => {
                     </td>
 
                     {/* Amount */}
-                    <td>
+                    <td className="min-w-35">
                       <span
                         className={`font-bold text-base ${
                           transaction.type === 'Income'
@@ -1356,7 +1356,7 @@ const AddTransactions = () => {
                             : 'text-red-500'
                         }`}
                       >
-                        ৳ {transaction.amount}
+                        $ {transaction.amount}
                       </span>
                     </td>
 

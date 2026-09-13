@@ -77,7 +77,7 @@ const ResultsChart = ({
   };
 
   return (
-    <div className="w-4/5 h-120 mt-1 mb-15">
+    <div className="w-full max-w-4xl h-120 mt-1 mb-20">
       <p className="text-[#5c23be] text-lg font-bold pb-2">
         Report By Transaction Type Chart:
       </p>
@@ -89,7 +89,7 @@ const ResultsChart = ({
           margin={{
             top: 20,
             right: 30,
-            left: 40,
+            left: 20,
             bottom: 40,
           }}
         >
@@ -109,7 +109,7 @@ const ResultsChart = ({
               value: 'Amount ($)',
               angle: -90,
               position: 'left',
-              offset: 20,
+              offset: 10,
             }}
           />
 

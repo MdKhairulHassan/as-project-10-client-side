@@ -43,9 +43,9 @@ const FinancialBalance = ({ totalBalance, totalIncome, totalExpense }) => {
         </p>
       </div>
 
-      <div className="flex justify-center gap-x-6">
+      <div className="flex justify-center gap-x-6 max-sm:flex-col sm:flex-col md:flex-col lg:flex-row gap-6">
         <div
-          className={`w-110 h-105 rounded-2xl ${theme === 'dark' ? 'bg-base-300' : 'bg-linear-to-br from-[#6b96e5] via-[#83abf5] to-[#5f86d0]'}`}
+          className={`lg:w-110 h-105 md:w-full rounded-2xl ${theme === 'dark' ? 'bg-base-300' : 'bg-linear-to-br from-[#6b96e5] via-[#83abf5] to-[#5f86d0]'}`}
         >
           <p className="px-5 py-10 text-white font-semibold text-2xl">
             Total Balance
@@ -55,15 +55,17 @@ const FinancialBalance = ({ totalBalance, totalIncome, totalExpense }) => {
           </div>
           <div className="flex justify-between px-7 items-center">
             <div className="mt-5 flex flex-col gap-y-3">
-              <div className="flex items-center gap-x-2">
+              <div className="flex items-center gap-x-2 max-sm:flex-col max-sm:gap-x-0 max-sm:items-start">
                 <p
-                  className={`font-bold text-2xl ${
+                  className={`font-bold text-2xl md:text-2xl xl:text-2xl lg:text-lg max-sm:text-lg ${
                     totalBalance < 0 ? 'text-red-500' : 'text-white'
                   }`}
                 >
                   $ {totalBalance ?? '00 - N/A'}
                 </p>
-                <p className="font-bold text-white text-2xl">Balance</p>
+                <p className="font-bold text-2xl text-white xl:text-2xl lg:text-lg">
+                  Balance
+                </p>
               </div>
               {totalBalance === null || totalBalance === undefined ? (
                 <p className="font-bold text-red-600 text-sm px-3 py-2 bg-violet-400 rounded-2xl">
@@ -89,7 +91,7 @@ const FinancialBalance = ({ totalBalance, totalIncome, totalExpense }) => {
         </div>
 
         <div
-          className={` w-80 h-105 rounded-2xl ${theme === 'dark' ? 'bg-base-300' : 'bg-linear-to-br from-[#55d39d] via-[#60e2aa] to-[#3ea478'}`}
+          className={`lg:w-80 md:w-full h-105 rounded-2xl ${theme === 'dark' ? 'bg-base-300' : 'bg-linear-to-br from-[#55d39d] via-[#60e2aa] to-[#3ea478'}`}
         >
           <p
             className={`px-5 py-10 font-semibold text-2xl ${
@@ -105,9 +107,9 @@ const FinancialBalance = ({ totalBalance, totalIncome, totalExpense }) => {
             <div
               className={`flex flex-col gap-y-3 ${totalIncome === null || totalIncome === undefined || totalIncome === 0 ? 'mt-5' : 'mt-10'}`}
             >
-              <div className="flex items-center gap-x-2">
+              <div className="flex items-center gap-x-2 max-sm:flex-col max-sm:items-start">
                 <p
-                  className={`font-bold text-2xl ${
+                  className={`font-bold text-2xl max-sm:text-lg md:text-2xl lg:text-lg xl:text-2xl ${
                     totalIncome < 0
                       ? 'text-red-500'
                       : theme === 'dark'
@@ -118,7 +120,7 @@ const FinancialBalance = ({ totalBalance, totalIncome, totalExpense }) => {
                   $ {totalIncome ?? '00 - N/A'}
                 </p>
                 <p
-                  className={`font-bold text-2xl ${
+                  className={`font-bold text-2xl md:text-2xl lg:text-lg xl:text-2xl ${
                     theme === 'dark' ? 'text-white' : 'text-[#3b3b3b]'
                   }`}
                 >
@@ -157,7 +159,7 @@ const FinancialBalance = ({ totalBalance, totalIncome, totalExpense }) => {
         </div>
 
         <div
-          className={`w-80 h-105 rounded-2xl ${theme === 'dark' ? 'bg-base-300' : 'bg-linear-to-br from-[#b6a4fee7] via-[#c8baffe7] to-[#b6a3ffe7]'}`}
+          className={`lg:w-80 md:w-full h-105 rounded-2xl ${theme === 'dark' ? 'bg-base-300' : 'bg-linear-to-br from-[#b6a4fee7] via-[#c8baffe7] to-[#b6a3ffe7]'}`}
         >
           <p
             className={`px-5 py-10 font-semibold text-2xl  ${
@@ -173,9 +175,9 @@ const FinancialBalance = ({ totalBalance, totalIncome, totalExpense }) => {
             <div
               className={`flex flex-col gap-y-3 ${totalIncome === null || totalIncome === undefined || totalIncome === 0 ? 'mt-5' : 'mt-10'}`}
             >
-              <div className="flex items-center gap-x-2">
+              <div className="flex items-center gap-x-2 max-sm:flex-col max-sm:items-start">
                 <p
-                  className={`font-bold text-2xl ${
+                  className={`font-bold text-2xl md:text-2xl lg:text-lg xl:text-2xl max-sm:text-lg ${
                     totalExpense < 0
                       ? 'text-red-500'
                       : theme === 'dark'
@@ -186,7 +188,7 @@ const FinancialBalance = ({ totalBalance, totalIncome, totalExpense }) => {
                   $ {totalExpense ?? '00 - N/A'}
                 </p>
                 <p
-                  className={`font-bold text-2xl  ${
+                  className={`font-bold text-2xl md:text-2xl lg:text-lg xl:text-2xl  ${
                     theme === 'dark' ? 'text-white' : 'text-[#3b3b3b]'
                   }`}
                 >

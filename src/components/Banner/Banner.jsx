@@ -32,7 +32,7 @@ const Banner = () => {
       <div className="max-w-7xl mx-auto px-6 grid md:grid-cols-2 items-center gap-12">
         {/* LEFT CONTENT */}
         <div>
-          <h1 className="text-4xl md:text-5xl font-bold text-[#5c23be] leading-tight">
+          <h1 className="md:text-4xl lg:text-5xl font-bold text-[#5c23be] leading-tight text-4xl">
             Smart finance starts here—track, save, and grow with ease.
           </h1>
 
@@ -60,11 +60,11 @@ const Banner = () => {
             <div className="absolute inset-0 bg-linear-to-tr from-[#5c23be]/30 to-[#10B981]/30 blur-3xl rounded-full"></div>
 
             {/* Image Card */}
-            <div className="relative bg-white/70 backdrop-blur-lg p-6 rounded-3xl shadow-xl">
+            <div className="relative bg-white/70 backdrop-blur-lg p-6 rounded-3xl shadow-xl  sm:mx-8">
               <img
                 src={bannerImage}
                 alt="finance dashboard"
-                className="w-[320px] md:w-96 rounded-xl"
+                className="w-full md:w-96 rounded-xl"
               />
             </div>
           </div>

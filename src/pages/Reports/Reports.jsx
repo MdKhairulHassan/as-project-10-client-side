@@ -797,7 +797,7 @@ const Reports = () => {
             ? 'Report Of The Transactions'
             : 'All Of Your Report Of The Transactions Will Be Stored Here'}
         </h2>
-        <p className="text-gray-600 mt-3 px-80">
+        <p className="text-gray-600 mt-3 sm:px-20 md:px-40 lg:px-80">
           {transactions.length > 0
             ? 'Check the report by the chart of the transaction, which will be easier to understand for your transaction monitor.'
             : 'After adding the transaction, you can check the report by the chart of the transaction.'}
@@ -834,18 +834,18 @@ const Reports = () => {
             className={`${theme === 'dark' ? 'bg-base-100' : 'bg-white'} drop-shadow-sm rounded-3xl border border-violet-100 p-3 mb-10`}
           >
             <div
-              className={`flex justify-between p-3 rounded-3xl items-center ${selectedMonthYear === '' && theme === 'light' ? 'bg-gray-100' : selectedMonthYear === '' && theme === 'dark' ? 'bg-base-300' : 'bg-base-100'}`}
+              className={`flex justify-between p-3 rounded-3xl items-center sm:flex-wrap sm:gap-4 max-sm:flex-wrap ${selectedMonthYear === '' && theme === 'light' ? 'bg-gray-100' : selectedMonthYear === '' && theme === 'dark' ? 'bg-base-300' : 'bg-base-100'}`}
             >
               <div>
                 <h3 className="text-2xl font-bold text-[#5c23be]">
                   Comprehensive Report
                 </h3>
 
-                <p className="text-sm text-gray-500 mt-1">
+                <p className="text-sm text-gray-500 mt-1 sm:pr-2">
                   Report of all time periods. Which is selected by default.
                 </p>
               </div>
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col max-sm:pt-6 sm:pt-5 md:pt-5 lg:pt-1 gap-2">
                 {selectedMonthYear === '' ? (
                   <p className="font-semibold text-[#522e90]">
                     Default selected
@@ -857,7 +857,7 @@ const Reports = () => {
                 <button
                   type="button"
                   onClick={() => setSelectedMonthYear('')}
-                  className={`btn rounded-xl border-none text-white hover:bg-emerald-700 ${selectedMonthYear === '' ? 'bg-emerald-700' : 'bg-[#10B981]'}`}
+                  className={`sm:py-4 md:py-5 lg:py-5 max-sm:py-6 btn rounded-xl border-none text-white hover:bg-emerald-700 ${selectedMonthYear === '' ? 'bg-emerald-700' : 'bg-[#10B981]'}`}
                 >
                   🌍 Comprehensive Report Of All Time Periods
                 </button>
@@ -882,7 +882,7 @@ const Reports = () => {
               {/* Right Side */}
               <form
                 onSubmit={handleAddSort}
-                className="flex flex-wrap items-end gap-3"
+                className="flex md:flex-wrap sm:flex-row sm:items-start max-sm:flex-wrap lg:flex-row md:items-start md:pt-4 sm:pt-4 items-end gap-3 max-sm:pt-7"
               >
                 <div className="flex flex-col">
                   <label className="font-semibold text-[#522e90] mb-2">
@@ -906,14 +906,14 @@ const Reports = () => {
                   )}
                   <button
                     type="submit"
-                    className={`btn rounded-xl border-none text-white hover:bg-[#4b1c9a]  ${selectedMonthYear === '' ? 'bg-[#7835ec]' : 'bg-[#4b1c9a]'}`}
+                    className={`btn rounded-xl border-none text-white hover:bg-[#4b1c9a] max-sm:mt-0 ${selectedMonthYear === '' ? 'sm:mt-8 lg:mt-8 md:mt-8 mt-8 bg-[#7835ec]' : 'bg-[#4b1c9a]'}`}
                   >
                     <IoBarChart /> Sort The Report
                   </button>
                 </div>
               </form>
             </div>
-            <div className="flex justify-end gap-x-3 px-5 py-2">
+            <div className="flex max-sm:flex-wrap gap-y-2 justify-start gap-x-3 px-5 py-2 sm:px-3 max-sm:px-3">
               <button
                 onClick={() => setCategory('bycategory')}
                 className={`btn rounded-xl border-none text-white px-5 hover:bg-emerald-700 ${category === 'bycategory' ? 'bg-emerald-700' : 'bg-[#10B981]'}`}
