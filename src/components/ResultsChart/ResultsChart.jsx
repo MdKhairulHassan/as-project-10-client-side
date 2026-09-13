@@ -77,7 +77,7 @@ const ResultsChart = ({
   };
 
   return (
-    <div className="w-full max-w-4/5 h-120 mt-1 mb-20">
+    <div className="w-full 2xl:h-170 xl:max-w-7xl md:max-w-6xl max-sm:max-w-4xl sm:max-w-4xl max-sm:h-87.5 sm:h-100 md:h-100 lg:h-110 xl:h-120 mt-1 mb-20">
       <p className="text-[#5c23be] text-lg font-bold pb-2">
         Report By Transaction Type Chart:
       </p>

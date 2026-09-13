@@ -136,7 +136,7 @@ const CategoryChart = ({
       <p className="text-[#5c23be] text-lg font-bold pb-5">
         Report By Transaction Category Chart:
       </p>
-      <div className="w-full h-87.5 sm:h-100 lg:h-112.5">
+      <div className="w-full max-sm:h-87.5 sm:h-100 md:h-100 lg:h-110 xl:h-120 2xl:h-170">
         <BarChart
           style={{
             width: '100%',
