@@ -56,7 +56,12 @@ const MyTransactions = ({
       </td>
 
       <td className="min-w-30">
-        {new Date(transaction.date).toISOString().split('T')[0]}
+        {/* {new Date(transaction.date).toISOString().split('T')[0]} */}
+        {new Date(transaction.date).toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+        })}
       </td>
 
       <td>

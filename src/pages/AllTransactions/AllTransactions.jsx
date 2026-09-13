@@ -2101,7 +2101,7 @@ const AllTransactions = () => {
             </div>
           </div>
           <div className="overflow-x-auto border-y border-neutral-200 mb-16 mt-4">
-            <table className="table table-zebra">
+            <table className="table table-zebra min-w-273">
               {/* <thead>
                 <tr>
                   <th>#</th>
@@ -2247,8 +2247,16 @@ const AllTransactions = () => {
                 <p className="text-sm opacity-60 mb-1">Date</p>
 
                 <h2 className="font-bold capitalize">
+                  {/* {new Date(selectedTransaction?.date).toLocaleDateString(
+                    'en-US',
+                  )} */}
                   {new Date(selectedTransaction?.date).toLocaleDateString(
                     'en-US',
+                    {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric',
+                    },
                   )}
                 </h2>
               </div>

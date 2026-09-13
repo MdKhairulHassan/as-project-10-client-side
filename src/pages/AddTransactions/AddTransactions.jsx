@@ -1299,7 +1299,7 @@ const AddTransactions = () => {
         <div className="w-full overflow-hidden rounded-3xl border border-base-300 bg-base-100 shadow-xl mb-20">
           {/* Scroll Container */}
           <div className="overflow-x-auto overflow-y-auto max-h-[70vh]">
-            <table className="table table-zebra min-w-225">
+            <table className="table table-zebra min-w-242">
               {/* head */}
               <thead className="bg-base-200 text-base-content sticky top-0 z-10">
                 <tr>
@@ -1363,7 +1363,12 @@ const AddTransactions = () => {
                     {/* Date */}
                     <td className="min-w-30">
                       {/* {transaction.date?.split('T')[0]} */}
-                      {new Date(transaction.date).toISOString().split('T')[0]}
+                      {/* {new Date(transaction.date).toISOString().split('T')[0]} */}
+                      {new Date(transaction.date).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                      })}
                     </td>
 
                     {/* Type */}
@@ -1448,8 +1453,16 @@ const AddTransactions = () => {
                       <p className="text-sm opacity-60 mb-1">Date</p>
 
                       <h2 className="font-bold capitalize">
+                        {/* {new Date(selectedTransaction?.date).toLocaleDateString(
+                          'en-US',
+                        )} */}
                         {new Date(selectedTransaction?.date).toLocaleDateString(
                           'en-US',
+                          {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                          },
                         )}
                       </h2>
                     </div>
